@@ -1,0 +1,20 @@
+# Kafka
+kafka-python==2.0.2
+confluent-kafka==2.5.3
+
+# Data
+pandas==2.2.3
+
+# HTTP
+requests==2.32.3
+
+# Environment
+python-dotenv==1.1.0
+
+# PostgreSQL
+psycopg2-binary==2.9.10
+
+# Developer tools (opcionais, mas recomendados)
+pytest==8.3.5
+black==25.1.0
+ruff==0.11.8

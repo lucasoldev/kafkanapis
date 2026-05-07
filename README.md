@@ -1,4 +1,3 @@
-```
 # Kafka n APIs
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
@@ -73,11 +72,15 @@ This design decouples data sources from processing logic, making it easy to add 
 | Layer          | Technology                          |
 |----------------|-------------------------------------|
 | **Messaging**  | Apache Kafka                        |
-| **Producers**  | Python + `kafka-python` / `confluent-kafka` |
+| **Producers**  | Python + `kafka-python`             |
 | **Consumers**  | Python microservices                |
-| **APIs**       | ip-api.com, isc.org, others         |
+| **HTTP**       | `requests`                          |
+| **APIs**       | ip-api.com, viacep.com.br, others   |
+| **Data**       | `pandas`                            |
+| **Database**   | PostgreSQL + `psycopg2-binary`      |
+| **Config**     | `python-dotenv`                     |
 | **Containers** | Docker + Docker Compose             |
-| **Dev tools**  | `venv`, `pytest`, `black`, `ruff`   |
+| **Dev tools**  | `venv`,                             |
 
 ---
 
