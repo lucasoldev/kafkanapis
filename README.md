@@ -1,9 +1,7 @@
-```markdown
 # kafkanapis
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
 [![Kafka](https://img.shields.io/badge/Apache%20Kafka-3.6+-231F20.svg)](https://kafka.apache.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 **Kafka-powered pipeline: Pi-hole DNS events + Public API data**
 
@@ -22,7 +20,6 @@
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [Roadmap](#roadmap)
-- [License](#license)
 
 ---
 
@@ -35,6 +32,7 @@ Whether you're monitoring suspicious domains, analyzing traffic patterns, or sim
 ---
 
 ## Architecture
+
 
 ```
 ┌──────────────┐     ┌────────────┐     ┌───────────────┐
