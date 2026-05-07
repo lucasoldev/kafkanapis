@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# Environment
+.env
+*.env
+
+# Docker
+data/
+.volumes/
+
+# Kafka
+kafka-logs/
+kafka-data/
+
+# Logs
+*.log
+logs/
