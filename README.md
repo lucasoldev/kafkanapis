@@ -49,25 +49,17 @@ From there, **three independent consumers** subscribe to these topics and proces
 
 ```mermaid
 flowchart TD
-    %% Internet Cloud
     subgraph Internet [🌐 Internet]
-        direction TB
-        API1[Public APIs<br/>ip-api.com, viacep.com.br, etc.]
+        API1[Public APIs]
     end
 
-    %% Local Network (LAN)
-    subgraph LocalNetwork [🏠 Local Network - LAN]
-        direction TB
-        
+    subgraph LocalNetwork [🏠 Local Network]
         subgraph PiHole [🖥️ Pi-hole Server]
-            direction TB
-            P1[Local File<br/>/var/log/pihole.log]
-            P2[API Endpoints<br/>/api/logs/dnsmasq<br/>/devices, /top_clients, /upstreams<br/>/ftl, /system, /queries]
+            P1[Local File /var/log/pihole.log]
+            P2[API Endpoints /api/logs/dnsmasq /devices /top_clients /upstreams /ftl /system /queries]
         end
 
         subgraph PythonApp [🐍 Python Application]
-            direction TB
-            
             subgraph Producers [Producers]
                 PF1[Pi-hole File Monitor]
                 PP1[Pi-hole API Logs Poller]
@@ -75,25 +67,19 @@ flowchart TD
                 PF2[Public API Fetcher]
                 PF3[Random API Fetcher]
             end
-
             subgraph Consumers [Consumers]
                 C1[Consumer 1 - Logs]
                 C2[Consumer 2 - Metrics]
                 C3[Consumer 3 - External]
             end
-            
             subgraph Services [Internal Services]
-                S1[Random API Server<br/>Flask + Faker]
+                S1[Random API Server Flask + Faker]
                 S2[Kafka Client]
-            end
-            
-            subgraph Models [Data Models]
-                M1[Schemas & Validation]
             end
         end
 
         subgraph Kafka [📦 Kafka Cluster]
-            K1[Broker 1<br/>localhost:9092]
+            K1[Broker 1 localhost:9092]
             K2[Zookeeper]
         end
 
@@ -102,43 +88,22 @@ flowchart TD
         end
     end
 
-    %% Component Connections
-    API1 -->|HTTP| PF2
-    PF2 -->|Produces| K1
-    
-    P1 -->|Reads| PF1
-    PF1 -->|Produces| K1
-    
-    P2 -->|API| PP1
-    PP1 -->|Produces| K1
-    P2 -->|API| PP2
-    PP2 -->|Produces| K1
-    
-    S1 -->|Generates| PF3
-    PF3 -->|Produces| K1
-
-    K1 -->|Consumes| C1
-    K1 -->|Consumes| C2
-    K1 -->|Consumes| C3
-
-    C1 -->|Persists| DB1
-    C2 -->|Persists| DB1
-    C3 -->|Persists| DB1
-
-    %% Styles
-    classDef internet fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef lan fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    classDef pihole fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    classDef python fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
-    classDef kafka fill:#fff8e1,stroke:#bf360c,stroke-width:2px
-    classDef db fill:#e0f2f1,stroke:#004d40,stroke-width:2px
-
-    class Internet internet
-    class LocalNetwork lan
-    class PiHole pihole
-    class PythonApp python
-    class Kafka kafka
-    class Database db
+    API1 --> PF2
+    PF2 --> K1
+    P1 --> PF1
+    PF1 --> K1
+    P2 --> PP1
+    PP1 --> K1
+    P2 --> PP2
+    PP2 --> K1
+    S1 --> PF3
+    PF3 --> K1
+    K1 --> C1
+    K1 --> C2
+    K1 --> C3
+    C1 --> DB1
+    C2 --> DB1
+    C3 --> DB1
 
 ```
 
@@ -423,7 +388,6 @@ kafka-n-apis/
 
 ---
 
----
 
 ## ✨ Features
 
@@ -625,3 +589,16 @@ python -m src.consumers.consumer_3_external
 - [ ] Schema Registry and Avro support
 - [ ] Metrics export (Prometheus)
 - [ ] Kubernetes manifests
+
+---
+
+## 👋 See You Around
+
+Thanks for stopping by. I hope this project gave you a little spark.
+
+Questions? Ideas? Want to share something cool?  
+Just open an issue or say hello.
+
+**Go build something awesome.** 🚀
+
+---
