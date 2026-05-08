@@ -72,7 +72,7 @@ From there, **three independent consumers** subscribe to these topics and proces
 │    Public APIs           │────▶│                                        │
 │  (multiple)              │     │                                        │
 └──────────────────────────┘     │                                        │
-                                 │                                        │                      
+                                 │                                        │
 ┌──────────────────────────┐     │                                        │
 │    Localhost Random API  │────▶│                                       │
 └──────────────────────────┘     │                                        │
