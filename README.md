@@ -27,7 +27,7 @@
 
 ## Overview
 
-`Kafka n APIs` treats everything as an event stream. Data flows from **five independent sources** into Kafka topics:
+> "Kafka n APIs is a data pipeline that integrates multiple data sources into a single Kafka bus, allowing independent consumers to process information in real-time."
 
 | Source | Description |
 |--------|-------------|
@@ -153,44 +153,6 @@ flowchart TD
 | 🟡 Light Yellow | 📦 Kafka Cluster | Kafka cluster for event streaming |
 | 🟢 Teal | 🗄️ PostgreSQL | Database for persistence |
 
-
-```
-┌──────────────────────────┐     ┌────────────────────────────────────────┐
-│    Pi-hole (local)       │────▶│                                        │
-│  /var/log/pihole.log     │     │                                        │
-└──────────────────────────┘     │                                        │
-                                 │              Apache Kafka              │
-┌──────────────────────────┐     │                                        │
-│    Pi-hole (API logs)    │────▶│                                        │
-│  /api/logs/dnsmasq       │     │                                        │
-└──────────────────────────┘     │                                        │
-                                 │                                        │
-┌──────────────────────────┐     │                                        │
-│    Pi-hole (API)         │────▶│                                        │
-│  /devices                │     │                                        │
-│  /top_clients            │     │                                        │
-│  /upstreams              │     │                                        │
-│  /ftl                    │     │                                        │
-│  /system                 │     │                                        │
-│  /queries                │     │                                        │
-└──────────────────────────┘     │                                        │
-                                 │                                        │
-┌──────────────────────────┐     │                                        │
-│    Public APIs           │────▶│                                        │
-│  (multiple)              │     │                                        │
-└──────────────────────────┘     │                                        │
-                                 │                                        │
-┌──────────────────────────┐     │                                        │
-│    Localhost Random API  │────▶│                                       │
-└──────────────────────────┘     │                                        │
-                                 │                                        │
-                                 └───────┬──────────────┬──────────────┬──┘
-                                         │              │              │
-                                 ┌───────▼───┐  ┌───────▼───┐  ┌───────▼───┐
-                                 │ Consumer  │  │ Consumer  │  │ Consumer  │
-                                 │  Service  │  │  Service  │  │  Service  │
-                                 └───────────┘  └───────────┘  └───────────┘
-```
 
 ---
 
@@ -321,6 +283,7 @@ graph TD
     O --> AO
 ```
 
+### 🗂️ Directory Tree
 
 ```
 kafka-n-apis/
@@ -462,37 +425,41 @@ kafka-n-apis/
 
 ---
 
-## Features
+## ✨ Features
 
-- ✅ Pi-hole DNS logs via **local file** (real-time)
-- ✅ Pi-hole DNS logs via **API** (remote access)
-- ✅ Pi-hole metrics: devices, top clients, upstreams, FTL, system, queries
-- ✅ Multiple public APIs fetched as Kafka events
-- ✅ Localhost random data generator for testing
-- ✅ **Three independent consumers** for parallel processing
-- ✅ Configurable topics, consumer groups, and partitioning
-- ✅ Designed for local development with Docker Compose
-
----
-
-## Tech Stack
-
-| Layer          | Technology                          |
-|----------------|-------------------------------------|
-| **Messaging**  | Apache Kafka                        |
-| **Producers**  | Python + `kafka-python`             |
-| **Consumers**  | Python microservices                |
-| **HTTP**       | `requests`                          |
-| **APIs**       | Pi-hole, ip-api.com, viacep.com.br, Localhost Random API |
-| **Data**       | `pandas`                            |
-| **Database**   | PostgreSQL + `psycopg2-binary`      |
-| **Config**     | `python-dotenv`                     |
-| **Containers** | Docker + Docker Compose             |
-| **Dev tools**  | `venv`, `Flask` (for localhost API) |
+| Category | Feature |
+|----------|---------|
+| **Pi-hole Integration** | ✅ DNS logs via local file (real-time) |
+|  | ✅ DNS logs via API (remote access) |
+|  | ✅ Metrics: devices, top clients, upstreams, FTL, system, queries |
+| **External APIs** | ✅ Multiple public APIs fetched as Kafka events |
+| **Synthetic Data** | ✅ Localhost random data generator with `Faker` |
+| **Consumers** | ✅ **3 independent consumers** for parallel processing |
+|              | ✅ Logs, Metrics, and External data separation |
+| **Kafka** | ✅ Configurable topics, consumer groups, and partitioning |
+| **Deployment** | ✅ Designed for local development with Docker Compose |
+| **Future Ready** | ✅ Extensible architecture for new data sources |
 
 ---
 
-## Getting Started
+## 🛠️ Tech Stack
+
+| Layer          | Technology |
+|----------------|------------|
+| **Messaging**  | [Apache Kafka](https://kafka.apache.org/) |
+| **Producers**  | [Python](https://www.python.org/) + [`kafka-python`](https://kafka-python.readthedocs.io/) |
+| **Consumers**  | Python microservices |
+| **HTTP**       | [`requests`](https://docs.python-requests.org/) |
+| **APIs**       | [Pi-hole](https://pi-hole.net/), [ip-api.com](https://ip-api.com/), [viacep.com.br](https://viacep.com.br/), Localhost Random API |
+| **Data**       | [`pandas`](https://pandas.pydata.org/) |
+| **Database**   | [PostgreSQL](https://www.postgresql.org/) + [`psycopg2-binary`](https://www.psycopg.org/) |
+| **Config**     | [`python-dotenv`](https://github.com/theskumar/python-dotenv) |
+| **Containers** | [Docker](https://www.docker.com/) + [Docker Compose](https://docs.docker.com/compose/) |
+| **Dev tools**  | [`venv`](https://docs.python.org/3/library/venv.html), [`Flask`](https://flask.palletsprojects.com/) (for localhost API) |
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
 
@@ -510,10 +477,21 @@ cd kafka-n-apis
 ### 2. Start Kafka and Zookeeper
 
 ```bash
-docker compose up -d
+docker-compose up -d
 ```
 
 > Uses `bitnami/kafka` and `bitnami/zookeeper`. Brokers available at `localhost:9092`.
+
+**Verify Kafka is running:**
+
+```bash
+docker ps | grep kafka
+```
+
+**Expected output:**
+```
+<container_id>   bitnami/kafka:latest   "/opt/bitnami/script…"   Up  0.0.0.0:9092->9092/tcp
+```
 
 ### 3. Install Python dependencies
 
@@ -532,27 +510,100 @@ Edit `.env` with your Pi-hole URL, API tokens, and Kafka bootstrap.
 ### 5. Run the localhost random API (separate terminal)
 
 ```bash
-python -m producer.random_api_server
+python -m src.services.random_api_server
 ```
 
-> Runs a Flask server at `http://localhost:5000/random`
+> Runs a Flask server at `http://localhost:5000/random` powered by `Faker`.
 
 ### 6. Run the consumers (three separate terminals)
 
 **Consumer 1 (DNS logs):**
 ```bash
-python -m consumers.consumer_1_logs
+python -m src.consumers.consumer_1_logs
 ```
 
 **Consumer 2 (Metrics and system data):**
 ```bash
-python -m consumers.consumer_2_metrics
+python -m src.consumers.consumer_2_metrics
 ```
 
 **Consumer 3 (External and synthetic data):**
 ```bash
-python -m consumers.consumer_3_external
+python -m src.consumers.consumer_3_external
 ```
+
+### 7. Verify consumers are running (optional)
+
+```bash
+ps aux | grep consumer
+```
+
+---
+
+## 🖥️ Usage
+
+### Quick test with Kafka Console (produce & consume)
+
+**First, enter the Kafka container:**
+
+```bash
+docker exec -it kafka bash
+```
+
+**Produce a test message:**
+
+```bash
+echo "test" | kafka-console-producer --broker-list localhost:9092 --topic test
+```
+
+**Consume the test message:**
+
+```bash
+kafka-console-consumer --bootstrap-server localhost:9092 --topic test --from-beginning --max-messages 1
+```
+
+**Exit the container:**
+
+```bash
+exit
+```
+
+### List all Kafka topics
+
+```bash
+docker exec -it kafka kafka-topics.sh --list --bootstrap-server localhost:9092
+```
+
+### List consumer groups
+
+```bash
+docker exec -it kafka kafka-consumer-groups.sh --bootstrap-server localhost:9092 --list
+```
+
+### Top 3 from Pi-hole topic
+
+```bash
+docker exec -it kafka kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic pi-hole.logs.file --from-beginning --max-messages 3
+```
+
+### Running consumers (if not already running)
+
+**Consumer 1 (DNS logs):**
+```bash
+python -m src.consumers.consumer_1_logs
+```
+
+**Consumer 2 (Metrics and system data):**
+```bash
+python -m src.consumers.consumer_2_metrics
+```
+
+**Consumer 3 (External and synthetic data):**
+```bash
+python -m src.consumers.consumer_3_external
+```
+
+---
 
 ## Configuration
 
@@ -564,24 +615,6 @@ python -m consumers.consumer_3_external
 | `PIHOLE_LOG_PATH`     | Path to local pihole.log        | `/var/log/pihole/pihole.log` |
 | `RANDOM_API_URL`      | Localhost random API URL        | `http://localhost:5000/random` |
 
----
-
-## Usage
-
-**Consumer 1 (DNS logs):**
-```bash
-python -m consumers.consumer_1_logs
-```
-
-**Consumer 2 (Metrics and system data):**
-```bash
-python -m consumers.consumer_2_metrics
-```
-
-**Consumer 3 (External and synthetic data):**
-```bash
-python -m consumers.consumer_3_external
-```
 
 ---
 
