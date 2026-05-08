@@ -183,6 +183,132 @@ python -m consumers.consumer_3_external
 
 ## 📁 **Project Structure (caprichada)**
 
+```mermaid
+graph TD
+    subgraph "Raiz do Projeto"
+        A[docker-compose.yml]
+        B[.env.example]
+        C[requirements.txt]
+        D[README.md]
+        E[Makefile]
+        F[.gitignore]
+    end
+
+    subgraph "src/"
+        G[producers/]
+        H[consumers/]
+        I[services/]
+        J[models/]
+        K[config/]
+        L[utils/]
+        M[__main__.py]
+    end
+
+    subgraph "producers/"
+        N[base_producer.py]
+        O[pi_hole_file_monitor.py]
+        P[pi_hole_api_logs_poller.py]
+        Q[pi_hole_data_poller.py]
+        R[public_api_fetcher.py]
+        S[random_api_fetcher.py]
+    end
+
+    subgraph "consumers/"
+        T[base_consumer.py]
+        U[consumer_1_logs.py]
+        V[consumer_2_metrics.py]
+        W[consumer_3_external.py]
+    end
+
+    subgraph "services/"
+        X[api_client.py]
+        Y[random_api_server.py]
+        Z[kafka_client.py]
+    end
+
+    subgraph "models/"
+        AA[pi_hole_log.py]
+        AB[pi_hole_metric.py]
+        AC[public_api_data.py]
+        AD[random_data.py]
+    end
+
+    subgraph "config/"
+        AE[settings.py]
+        AF[topics.py]
+    end
+
+    subgraph "utils/"
+        AG[logger.py]
+        AH[file_watcher.py]
+        AI[timestamp.py]
+    end
+
+    subgraph "tests/"
+        AJ[test_producers.py]
+        AK[test_consumers.py]
+        AL[conftest.py]
+    end
+
+    subgraph "scripts/"
+        AM[create_topics.sh]
+        AN[delete_topics.sh]
+        AO[start_producers.sh]
+    end
+
+    %% Conexões
+    A --> G
+    B --> G
+    C --> G
+    D --> G
+    E --> G
+    F --> G
+
+    G --> H
+    G --> I
+    G --> J
+    G --> K
+    G --> L
+    G --> M
+
+    H --> N
+    H --> O
+    H --> P
+    H --> Q
+    H --> R
+    H --> S
+
+    I --> T
+    I --> U
+    I --> V
+    I --> W
+
+    J --> X
+    J --> Y
+    J --> Z
+
+    K --> AA
+    K --> AB
+    K --> AC
+    K --> AD
+
+    L --> AE
+    L --> AF
+
+    M --> AG
+    M --> AH
+    M --> AI
+
+    N --> AJ
+    N --> AK
+    N --> AL
+
+    O --> AM
+    O --> AN
+    O --> AO
+```
+
+
 ```
 kafka-n-apis/
 ├── docker-compose.yml                    # Kafka + Zookeeper
