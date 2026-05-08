@@ -65,7 +65,7 @@ From there, **three independent consumers** subscribe to these topics and proces
 
 ## 📁 **Project Structure**
 
-![Project Structure](mermaid-diagrams/project_structure.png)
+![Project Structure](mermaid-diagrams/project_structure_readme_friendly.png)
 
 ### 🗂️ Directory Tree
 
