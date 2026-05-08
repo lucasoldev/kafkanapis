@@ -15,6 +15,7 @@ psycopg2-binary==2.9.10
 
 # API Localhost (Random Data Generator)
 Flask==3.1.0
+Faker==35.2.0
 
 # Developer tools (opcionais, mas recomendados)
 pytest==8.3.5

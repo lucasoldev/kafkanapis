@@ -1,3 +1,5 @@
+## 📝 **Atualização final do README**
+
 # Kafka n APIs
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
@@ -5,12 +7,7 @@
 
 **Streaming Pi-hole DNS events, Public API data, and Localhost Random Data through Kafka**
 
-`Kafka n APIs` ingests data from three independent sources:
-- **Pi-hole DNS logs** (via local file + API)
-- **Public APIs** (geolocation, threat intelligence, etc.)
-- **Localhost random data generator API** (for testing, simulation, and integration)
-
-All sources are published into Apache Kafka topics, where downstream consumers can process, correlate, and act on these event streams independently.
+`Kafka n APIs` ingests data from **five independent sources** into Apache Kafka topics, where **three independent consumers** process, correlate, and act on these event streams.
 
 ---
 
@@ -30,19 +27,21 @@ All sources are published into Apache Kafka topics, where downstream consumers c
 
 ## Overview
 
-`Kafka n APIs` treats everything as an event stream. Three independent producers feed data into Kafka:
+`Kafka n APIs` treats everything as an event stream. Data flows from **five independent sources** into Kafka topics:
 
-### 1. **Pi-hole DNS logs** – with dual ingestion strategy:
-   - **File monitoring**: Watches `/var/log/pihole/pihole.log` in real-time using a tail-like approach, ideal for local access.
-   - **API polling**: Queries `/api/logs/dnsmasq` (or `/api/logs/ftl`) periodically or on-demand, ideal for remote access.
+| Source | Description |
+|--------|-------------|
+| **Pi-hole (local)** | Tails `/var/log/pihole/pihole.log` |
+| **Pi-hole (API logs)** | Polls `/api/logs/dnsmasq` |
+| **Pi-hole (API)** | Fetches `/devices`, `/top_clients`, `/upstreams`, `/ftl`, `/system`, `/queries` |
+| **Public APIs** | External data from multiple free test APIs |
+| **Localhost Random API** | Synthetic data (people, companies, random text) via `Faker` + Flask |
 
-### 2. **Public APIs** – external data (geolocation, threat intelligence, domain reputation, etc.)
+From there, **three independent consumers** subscribe to these topics and process the data:
 
-### 3. **Localhost Random API** – synthetic data for testing, correlation, and simulation.
-
-From there, independent consumer services subscribe to these topics and process the data in real-time.
-
-This design decouples data sources from processing logic, making it easy to add new APIs, swap consumers, or scale parts of the system independently.
+1. **Consumer 1** – processes DNS logs (local + API)
+2. **Consumer 2** – processes metrics and system data
+3. **Consumer 3** – processes external and synthetic data
 
 ---
 
@@ -50,50 +49,52 @@ This design decouples data sources from processing logic, making it easy to add 
 
 ```
 ┌──────────────────────────┐     ┌────────────────────────────────────────┐
-│    Pi-hole (local)      │────▶│                                        │
-│  /var/log/pihole.log    │     │                                        │
+│    Pi-hole (local)       │────▶│                                        │
+│  /var/log/pihole.log     │     │                                        │
 └──────────────────────────┘     │                                        │
                                  │              Apache Kafka              │
 ┌──────────────────────────┐     │                                        │
-│    Pi-hole (API)        │────▶│                                        │
-│  /api/logs/dnsmasq      │     │                                        │
+│    Pi-hole (API logs)    │────▶│                                        │
+│  /api/logs/dnsmasq       │     │                                        │
+└──────────────────────────┘     │                                        │
+                                 │                                        │
+┌──────────────────────────┐     │                                        │
+│    Pi-hole (API)         │────▶│                                        │
+│  /devices                │     │                                        │
+│  /top_clients            │     │                                        │
+│  /upstreams              │     │                                        │
+│  /ftl                    │     │                                        │
+│  /system                 │     │                                        │
+│  /queries                │     │                                        │
 └──────────────────────────┘     │                                        │
                                  │                                        │
 ┌──────────────────────────┐     │                                        │
 │    Public APIs           │────▶│                                        │
 │  (multiple)              │     │                                        │
-└──────────────────────────┘     └────────────┬──────────────┬────────────┘
-                                 │              │
-┌──────────────────────────┐     │              │
-│    Localhost Random API  │────▶│              │
-└──────────────────────────┘     │              │
-                                 │              │
-                          ┌───────▼───┐  ┌───────▼───┐
-                          │ Consumer  │  │ Consumer  │
-                          │  Service  │  │  Service  │
-                          └───────────┘  └───────────┘
+└──────────────────────────┘     │                                        │
+                                 │                                        │                      
+┌──────────────────────────┐     │                                        │
+│    Localhost Random API  │────▶│                                       │
+└──────────────────────────┘     │                                        │
+                                 │                                        │
+                                 └───────┬──────────────┬──────────────┬──┘
+                                         │              │              │
+                                 ┌───────▼───┐  ┌───────▼───┐  ┌───────▼───┐
+                                 │ Consumer  │  │ Consumer  │  │ Consumer  │
+                                 │  Service  │  │  Service  │  │  Service  │
+                                 └───────────┘  └───────────┘  └───────────┘
 ```
-
-1. **Producers**
-   - `Pi-hole file producer` → tailing `pihole.log`
-   - `Pi-hole API producer` → polling `/api/logs/dnsmasq`
-   - `Public API producer` → various external APIs
-   - `Random API producer` → localhost generator
-
-2. **Broker** → Kafka cluster receiving, storing, and distributing all event streams.
-
-3. **Consumers** → Independent services subscribing to topics, processing and correlating data from multiple sources.
 
 ---
 
 ## Features
 
-- ✅ Pi-hole DNS logs via **local file monitoring** (real-time)
-- ✅ Pi-hole DNS logs via **API polling** (remote access)
-- ✅ Multiple public APIs fetched and published as Kafka events
-- ✅ Localhost random data generator API for testing and simulation
-- ✅ Independent consumer services processing different topics
-- ✅ Correlation between DNS events, enriched API data, and synthetic patterns
+- ✅ Pi-hole DNS logs via **local file** (real-time)
+- ✅ Pi-hole DNS logs via **API** (remote access)
+- ✅ Pi-hole metrics: devices, top clients, upstreams, FTL, system, queries
+- ✅ Multiple public APIs fetched as Kafka events
+- ✅ Localhost random data generator for testing
+- ✅ **Three independent consumers** for parallel processing
 - ✅ Configurable topics, consumer groups, and partitioning
 - ✅ Designed for local development with Docker Compose
 
@@ -122,7 +123,7 @@ This design decouples data sources from processing logic, making it easy to add 
 
 - Python 3.10+
 - Docker & Docker Compose
-- Pi-hole instance accessible on your network (either local or remote)
+- Pi-hole instance accessible on your network
 
 ### 1. Clone the repository
 
@@ -142,10 +143,6 @@ docker compose up -d
 ### 3. Install Python dependencies
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate   # Linux/macOS
-# .venv\Scripts\activate    # Windows
-
 pip install -r requirements.txt
 ```
 
@@ -155,7 +152,7 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Edit `.env` with your Pi-hole URL, API tokens, Kafka bootstrap server, and localhost API settings.
+Edit `.env` with your Pi-hole URL, API tokens, and Kafka bootstrap.
 
 ### 5. Run the localhost random API (separate terminal)
 
@@ -165,61 +162,159 @@ python -m producer.random_api_server
 
 > Runs a Flask server at `http://localhost:5000/random`
 
-### 6. Run the producers
+### 6. Run the consumers (three separate terminals)
 
-**Pi-hole (file monitor)** – watch local log file:
+**Consumer 1 (DNS logs):**
 ```bash
-python -m producer.pi_hole_file_monitor
+python -m consumers.consumer_1_logs
 ```
 
-**Pi-hole (API poller)** – fetch logs via API:
+**Consumer 2 (Metrics and system data):**
 ```bash
-python -m producer.pi_hole_api_poller
+python -m consumers.consumer_2_metrics
 ```
 
-**Public APIs:**
+**Consumer 3 (External and synthetic data):**
 ```bash
-python -m producer.api_fetcher
-```
-
-**Random API:**
-```bash
-python -m producer.random_api_fetcher
-```
-
-### 7. Run a consumer
-
-```bash
-python -m consumers.event_processor
+python -m consumers.consumer_3_external
 ```
 
 ---
 
-## Project Structure
+## 📁 **Project Structure (caprichada)**
 
 ```
 kafka-n-apis/
-├── docker-compose.yml          # Kafka + Zookeeper
-├── .env.example                # Environment template
-├── requirements.txt
-├── README.md
-├── producer/
-│   ├── pi_hole_file_monitor.py   # Tailing pihole.log → Kafka
-│   ├── pi_hole_api_poller.py     # Fetching /api/logs/dnsmasq → Kafka
-│   ├── api_fetcher.py            # Public APIs → Kafka
-│   └── random_api_fetcher.py     # Localhost random API → Kafka
-├── consumers/
-│   ├── event_processor.py      # Process and correlate events
-│   └── alert_service.py        # Alerting based on patterns
-├── services/
-│   └── api_client.py           # Shared API client wrapper
-├── schemas/
-│   └── events.py               # Event schema definitions
-├── tests/
-│   └── test_producer.py
-└── scripts/
-    └── create_topics.sh
+├── docker-compose.yml                    # Kafka + Zookeeper
+├── .env.example                          # Environment template
+├── requirements.txt                      # Dependências Python
+├── README.md                             # Documentação do projeto
+├── .gitignore                            # Arquivos ignorados pelo Git
+├── Makefile                              # Comandos úteis (opcional)
+│
+├── src/                                  # Código-fonte principal
+│   ├── __init__.py
+│   │
+│   ├── producers/                        # Produtores (enviam dados para Kafka)
+│   │   ├── __init__.py
+│   │   ├── base_producer.py              # Classe base para produtores
+│   │   ├── pi_hole_file_monitor.py       # Tailing pihole.log → Kafka
+│   │   ├── pi_hole_api_logs_poller.py    # Fetching /api/logs/dnsmasq → Kafka
+│   │   ├── pi_hole_data_poller.py        # Fetching /devices, /top_clients, /upstreams, etc.
+│   │   ├── public_api_fetcher.py         # Public APIs → Kafka
+│   │   └── random_api_fetcher.py         # Localhost random API → Kafka
+│   │
+│   ├── consumers/                        # Consumidores (processam dados do Kafka)
+│   │   ├── __init__.py
+│   │   ├── base_consumer.py              # Classe base para consumidores
+│   │   ├── consumer_1_logs.py            # Processa logs DNS (file + API)
+│   │   ├── consumer_2_metrics.py         # Processa métricas (devices, clients, upstreams, etc.)
+│   │   └── consumer_3_external.py        # Processa dados externos (public APIs + random)
+│   │
+│   ├── services/                         # Serviços auxiliares
+│   │   ├── __init__.py
+│   │   ├── api_client.py                 # Cliente HTTP para APIs externas
+│   │   ├── random_api_server.py          # Flask server para dados aleatórios
+│   │   └── kafka_client.py               # Cliente Kafka (produtor/consumidor)
+│   │
+│   ├── models/                           # Modelos de dados (schemas)
+│   │   ├── __init__.py
+│   │   ├── pi_hole_log.py                # Schema para logs do Pi-hole
+│   │   ├── pi_hole_metric.py             # Schema para métricas do Pi-hole
+│   │   ├── public_api_data.py            # Schema para dados de APIs públicas
+│   │   └── random_data.py                # Schema para dados aleatórios
+│   │
+│   ├── config/                           # Configurações
+│   │   ├── __init__.py
+│   │   ├── settings.py                   # Carrega variáveis do .env
+│   │   └── topics.py                     # Definição dos tópicos Kafka
+│   │
+│   ├── utils/                            # Utilitários
+│   │   ├── __init__.py
+│   │   ├── logger.py                     # Configuração de logs
+│   │   ├── file_watcher.py               # Monitoramento de arquivos (tail -f)
+│   │   └── timestamp.py                  # Manipulação de timestamps
+│   │
+│   └── __main__.py                       # Ponto de entrada (opcional)
+│
+├── tests/                                # Testes
+│   ├── __init__.py
+│   ├── test_producers.py                 # Testes dos produtores
+│   ├── test_consumers.py                 # Testes dos consumidores
+│   └── conftest.py                       # Configurações dos testes
+│
+├── scripts/                              # Scripts de suporte
+│   ├── create_topics.sh                  # Cria os tópicos no Kafka
+│   ├── delete_topics.sh                  # Remove os tópicos
+│   └── start_producers.sh                # Inicia todos os produtores
+│
+└── data/                                 # Dados locais (opcional)
+    └── logs/                             # Logs gerados pelo projeto
 ```
+
+---
+
+## 📄 **Detalhamento dos arquivos principais**
+
+### **Produtores (src/producers/)**
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `base_producer.py` | Classe abstrata com métodos comuns (conexão Kafka, envio de mensagens, tratamento de erros) |
+| `pi_hole_file_monitor.py` | Monitora `/var/log/pihole/pihole.log` usando `file_watcher.py` e envia linhas para o tópico `pi-hole.logs.file` |
+| `pi_hole_api_logs_poller.py` | Faz polling do endpoint `/api/logs/dnsmasq` a cada N segundos e envia para `pi-hole.logs.api` |
+| `pi_hole_data_poller.py` | Consulta endpoints `/devices`, `/top_clients`, `/upstreams`, `/ftl`, `/system`, `/queries` e envia para `pi-hole.data.endpoints` |
+| `public_api_fetcher.py` | Faz requisições a APIs públicas (ip-api, viacep, etc.) e envia para `public.api.data` |
+| `random_api_fetcher.py` | Consulta `http://localhost:5000/random` e envia para `random.data.raw` |
+
+### **Consumidores (src/consumers/)**
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `base_consumer.py` | Classe abstrata com métodos comuns (conexão Kafka, consumo de mensagens, processamento) |
+| `consumer_1_logs.py` | Inscreve-se nos tópicos `pi-hole.logs.file` e `pi-hole.logs.api` e processa logs DNS |
+| `consumer_2_metrics.py` | Inscreve-se no tópico `pi-hole.data.endpoints` e processa métricas (dispositivos, top clientes, upstreams, FTL, sistema, queries) |
+| `consumer_3_external.py` | Inscreve-se nos tópicos `public.api.data` e `random.data.raw` e processa dados externos |
+
+### **Serviços (src/services/)**
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `api_client.py` | Cliente HTTP reutilizável para chamar APIs externas (tratamento de erros, retry, timeouts) |
+| `random_api_server.py` | Servidor Flask que gera dados aleatórios em `/random` |
+| `kafka_client.py` | Encapsula a conexão com Kafka (produção e consumo) |
+
+### **Modelos (src/models/)**
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `pi_hole_log.py` | Schema para logs do Pi-hole (timestamp, cliente, domínio, status) |
+| `pi_hole_metric.py` | Schema para métricas (dispositivos, top clientes, upstreams, etc.) |
+| `public_api_data.py` | Schema para dados de APIs públicas (geolocalização, etc.) |
+| `random_data.py` | Schema para dados aleatórios (id, valor, categoria, timestamp) |
+
+### **Configuração (src/config/)**
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `settings.py` | Carrega variáveis do `.env` usando `python-dotenv` |
+| `topics.py` | Define constantes com os nomes dos tópicos |
+
+### **Utilitários (src/utils/)**
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `logger.py` | Configura logging com níveis, cores e formato |
+| `file_watcher.py` | Monitora arquivos em tempo real (tail -f) |
+| `timestamp.py` | Funções para manipulação de timestamps (formatação, conversão) |
+
+### **Scripts (scripts/)**
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `create_topics.sh` | Cria os tópicos no Kafka: `pi-hole.logs.file`, `pi-hole.logs.api`, `pi-hole.data.endpoints`, `public.api.data`, `random.data.raw` |
+| `delete_topics.sh` | Remove os tópicos (útil para limpeza) |
+| `start_producers.sh` | Inicia todos os produtores em background |
 
 ---
 
@@ -232,49 +327,24 @@ kafka-n-apis/
 | `PIHOLE_API_TOKEN`    | Pi-hole API token               | —                 |
 | `PIHOLE_LOG_PATH`     | Path to local pihole.log        | `/var/log/pihole/pihole.log` |
 | `RANDOM_API_URL`      | Localhost random API URL        | `http://localhost:5000/random` |
-| `RANDOM_API_INTERVAL` | Seconds between API calls       | `5`               |
-| `DNS_LOGS_TOPIC`      | Kafka topic for DNS logs        | `pi-hole.dns.raw` |
-| `API_DATA_TOPIC`      | Kafka topic for public API data | `public.api.data` |
-| `RANDOM_DATA_TOPIC`   | Kafka topic for random data     | `random.data.raw` |
 
 ---
 
 ## Usage
 
-**Monitor Pi-hole logs locally (file):**
-
+**Consumer 1 (DNS logs):**
 ```bash
-python -m producer.pi_hole_file_monitor
+python -m consumers.consumer_1_logs
 ```
 
-**Fetch Pi-hole logs via API (remote):**
-
+**Consumer 2 (Metrics and system data):**
 ```bash
-python -m producer.pi_hole_api_poller
+python -m consumers.consumer_2_metrics
 ```
 
-**Produce public API data:**
-
+**Consumer 3 (External and synthetic data):**
 ```bash
-python -m producer.api_fetcher
-```
-
-**Produce random data from localhost API:**
-
-```bash
-python -m producer.random_api_fetcher
-```
-
-**Run a consumer:**
-
-```bash
-python -m consumers.event_processor
-```
-
-**List topics and consumer groups:**
-
-```bash
-docker exec -it kafka kafka-topics.sh --list --bootstrap-server localhost:9092
+python -m consumers.consumer_3_external
 ```
 
 ---
@@ -286,28 +356,3 @@ docker exec -it kafka kafka-topics.sh --list --bootstrap-server localhost:9092
 - [ ] Schema Registry and Avro support
 - [ ] Metrics export (Prometheus)
 - [ ] Kubernetes manifests
-- [ ] Correlation engine between Pi-hole and random data
-- [ ] Localhost API with configurable schemas
-- [ ] **Pi-hole log file monitoring** (✅ implemented)
-- [ ] **Pi-hole log API polling** (✅ implemented)
-
----
-
-## 📍 **Notas sobre a implementação dos dois métodos**
-
-### **1. Monitoramento de arquivo local (`pi_hole_file_monitor.py`)**
-
-Este produtor usa `tail -f` (ou equivalente em Python com `subprocess`) para acompanhar o arquivo `/var/log/pihole/pihole.log` em tempo real. Cada nova linha do log é parseada, transformada em JSON e enviada para o Kafka.
-
-**Vantagens:** Baixa latência, detecção imediata de novos eventos.
-
-**Limitações:** Requer acesso SSH ou local ao Pi-hole.
-
-### **2. Polling via API (`pi_hole_api_poller.py`)**
-
-Este produtor faz requisições periódicas (ex: a cada 5 segundos) ao endpoint `/api/logs/dnsmasq` para obter as últimas N linhas do log. Cada resposta é processada e enviada ao Kafka.
-
-**Vantagens:** Acesso remoto, não precisa de SSH.
-
-**Limitações:** Latência adicional (devido ao intervalo de polling), pode não capturar eventos entre as consultas.
-
