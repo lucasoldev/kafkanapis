@@ -49,14 +49,14 @@ From there, **three independent consumers** subscribe to these topics and proces
 
 ```mermaid
 flowchart TD
-    %% Nuvem da Internet
+    %% Internet Cloud
     subgraph Internet [🌐 Internet]
         direction TB
-        API1[APIs Públicas<br/>ip-api.com, viacep.com.br, etc.]
+        API1[Public APIs<br/>ip-api.com, viacep.com.br, etc.]
     end
 
-    %% Rede Local (LAN)
-    subgraph RedeLocal [🏠 Rede Local - LAN]
+    %% Local Network (LAN)
+    subgraph LocalNetwork [🏠 Local Network - LAN]
         direction TB
         
         subgraph PiHole [🖥️ Pi-hole Server]
@@ -65,10 +65,10 @@ flowchart TD
             P2[API Endpoints<br/>/api/logs/dnsmasq<br/>/devices, /top_clients, /upstreams<br/>/ftl, /system, /queries]
         end
 
-        subgraph PythonApp [🐍 Aplicação Python]
+        subgraph PythonApp [🐍 Python Application]
             direction TB
             
-            subgraph Producers [Produtores]
+            subgraph Producers [Producers]
                 PF1[Pi-hole File Monitor]
                 PP1[Pi-hole API Logs Poller]
                 PP2[Pi-hole Data Poller]
@@ -76,19 +76,19 @@ flowchart TD
                 PF3[Random API Fetcher]
             end
 
-            subgraph Consumers [Consumidores]
+            subgraph Consumers [Consumers]
                 C1[Consumer 1 - Logs]
-                C2[Consumer 2 - Métricas]
-                C3[Consumer 3 - Externos]
+                C2[Consumer 2 - Metrics]
+                C3[Consumer 3 - External]
             end
             
-            subgraph Services [Serviços Internos]
+            subgraph Services [Internal Services]
                 S1[Random API Server<br/>Flask + Faker]
                 S2[Kafka Client]
             end
             
-            subgraph Models [Modelos de Dados]
-                M1[Schemas e Validação]
+            subgraph Models [Data Models]
+                M1[Schemas & Validation]
             end
         end
 
@@ -98,34 +98,34 @@ flowchart TD
         end
 
         subgraph Database [🗄️ PostgreSQL]
-            DB1[Banco de Dados]
+            DB1[Database]
         end
     end
 
-    %% Conexões entre componentes
+    %% Component Connections
     API1 -->|HTTP| PF2
-    PF2 -->|Produz| K1
+    PF2 -->|Produces| K1
     
-    P1 -->|Leitura| PF1
-    PF1 -->|Produz| K1
+    P1 -->|Reads| PF1
+    PF1 -->|Produces| K1
     
     P2 -->|API| PP1
-    PP1 -->|Produz| K1
+    PP1 -->|Produces| K1
     P2 -->|API| PP2
-    PP2 -->|Produz| K1
+    PP2 -->|Produces| K1
     
-    S1 -->|Gera| PF3
-    PF3 -->|Produz| K1
+    S1 -->|Generates| PF3
+    PF3 -->|Produces| K1
 
-    K1 -->|Consome| C1
-    K1 -->|Consome| C2
-    K1 -->|Consome| C3
+    K1 -->|Consumes| C1
+    K1 -->|Consumes| C2
+    K1 -->|Consumes| C3
 
-    C1 -->|Persiste| DB1
-    C2 -->|Persiste| DB1
-    C3 -->|Persiste| DB1
+    C1 -->|Persists| DB1
+    C2 -->|Persists| DB1
+    C3 -->|Persists| DB1
 
-    %% Estilo
+    %% Styles
     classDef internet fill:#e1f5fe,stroke:#01579b,stroke-width:2px
     classDef lan fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     classDef pihole fill:#fff3e0,stroke:#e65100,stroke-width:2px
@@ -134,13 +134,25 @@ flowchart TD
     classDef db fill:#e0f2f1,stroke:#004d40,stroke-width:2px
 
     class Internet internet
-    class RedeLocal lan
+    class LocalNetwork lan
     class PiHole pihole
     class PythonApp python
     class Kafka kafka
     class Database db
 
 ```
+
+**Legend:**
+
+| Color | Component | Description |
+|-------|-----------|-------------|
+| 🔵 Light Blue | 🌐 Internet | External public APIs (HTTP access) |
+| 🟣 Light Purple | 🏠 Local Network | Internal local network environment |
+| 🟡 Light Orange | 🖥️ Pi-hole Server | Pi-hole server with local logs and API |
+| 🟢 Light Green | 🐍 Python Application | Python code with producers, consumers, and services |
+| 🟡 Light Yellow | 📦 Kafka Cluster | Kafka cluster for event streaming |
+| 🟢 Teal | 🗄️ PostgreSQL | Database for persistence |
+
 
 ```
 ┌──────────────────────────┐     ┌────────────────────────────────────────┐
@@ -180,22 +192,13 @@ flowchart TD
                                  └───────────┘  └───────────┘  └───────────┘
 ```
 
-Legenda:
-Cor	Componente	Descrição
-🔵 Azul claro	🌐 Internet	APIs públicas externas (acesso via HTTP)
-🟣 Roxo claro	🏠 Rede Local	Ambiente interno da rede local
-🟡 Laranja claro	🖥️ Pi-hole Server	Servidor Pi-hole com logs locais e API
-🟢 Verde claro	🐍 Aplicação Python	Código Python com produtores, consumidores e serviços
-🟡 Amarelo claro	📦 Kafka Cluster	Cluster Kafka para streaming de eventos
-🟢 Azul esverdeado	🗄️ PostgreSQL	Banco de dados para persistência
-
 ---
 
 ## 📁 **Project Structure**
 
 ```mermaid
 graph TD
-    subgraph "Raiz do Projeto"
+    subgraph "Project Root"
         A[docker-compose.yml]
         B[.env.example]
         C[requirements.txt]
@@ -266,7 +269,7 @@ graph TD
         AO[start_producers.sh]
     end
 
-    %% Conexões
+    %% Connections
     A --> G
     B --> G
     C --> G
@@ -323,136 +326,137 @@ graph TD
 kafka-n-apis/
 ├── docker-compose.yml                    # Kafka + Zookeeper
 ├── .env.example                          # Environment template
-├── requirements.txt                      # Dependências Python
-├── README.md                             # Documentação do projeto
-├── .gitignore                            # Arquivos ignorados pelo Git
-├── Makefile                              # Comandos úteis (opcional)
+├── requirements.txt                      # Python dependencies
+├── README.md                             # Project documentation
+├── .gitignore                            # Files ignored by Git
+├── Makefile                              # Useful commands (optional)
 │
-├── src/                                  # Código-fonte principal
+├── src/                                  # Main source code
 │   ├── __init__.py
 │   │
-│   ├── producers/                        # Produtores (enviam dados para Kafka)
+│   ├── producers/                        # Producers (send data to Kafka)
 │   │   ├── __init__.py
-│   │   ├── base_producer.py              # Classe base para produtores
+│   │   ├── base_producer.py              # Base class for producers
 │   │   ├── pi_hole_file_monitor.py       # Tailing pihole.log → Kafka
 │   │   ├── pi_hole_api_logs_poller.py    # Fetching /api/logs/dnsmasq → Kafka
 │   │   ├── pi_hole_data_poller.py        # Fetching /devices, /top_clients, /upstreams, etc.
 │   │   ├── public_api_fetcher.py         # Public APIs → Kafka
 │   │   └── random_api_fetcher.py         # Localhost random API → Kafka
 │   │
-│   ├── consumers/                        # Consumidores (processam dados do Kafka)
+│   ├── consumers/                        # Consumers (process data from Kafka)
 │   │   ├── __init__.py
-│   │   ├── base_consumer.py              # Classe base para consumidores
-│   │   ├── consumer_1_logs.py            # Processa logs DNS (file + API)
-│   │   ├── consumer_2_metrics.py         # Processa métricas (devices, clients, upstreams, etc.)
-│   │   └── consumer_3_external.py        # Processa dados externos (public APIs + random)
+│   │   ├── base_consumer.py              # Base class for consumers
+│   │   ├── consumer_1_logs.py            # Processes DNS logs (file + API)
+│   │   ├── consumer_2_metrics.py         # Processes metrics (devices, clients, upstreams, etc.)
+│   │   └── consumer_3_external.py        # Processes external data (public APIs + random)
 │   │
-│   ├── services/                         # Serviços auxiliares
+│   ├── services/                         # Auxiliary services
 │   │   ├── __init__.py
-│   │   ├── api_client.py                 # Cliente HTTP para APIs externas
-│   │   ├── random_api_server.py          # Flask server para dados aleatórios
-│   │   └── kafka_client.py               # Cliente Kafka (produtor/consumidor)
+│   │   ├── api_client.py                 # HTTP client for external APIs
+│   │   ├── random_api_server.py          # Flask server for random data
+│   │   └── kafka_client.py               # Kafka client (producer/consumer)
 │   │
-│   ├── models/                           # Modelos de dados (schemas)
+│   ├── models/                           # Data models (schemas)
 │   │   ├── __init__.py
-│   │   ├── pi_hole_log.py                # Schema para logs do Pi-hole
-│   │   ├── pi_hole_metric.py             # Schema para métricas do Pi-hole
-│   │   ├── public_api_data.py            # Schema para dados de APIs públicas
-│   │   └── random_data.py                # Schema para dados aleatórios
+│   │   ├── pi_hole_log.py                # Schema for Pi-hole logs
+│   │   ├── pi_hole_metric.py             # Schema for Pi-hole metrics
+│   │   ├── public_api_data.py            # Schema for public API data
+│   │   └── random_data.py                # Schema for random data
 │   │
-│   ├── config/                           # Configurações
+│   ├── config/                           # Configuration
 │   │   ├── __init__.py
-│   │   ├── settings.py                   # Carrega variáveis do .env
-│   │   └── topics.py                     # Definição dos tópicos Kafka
+│   │   ├── settings.py                   # Loads .env variables
+│   │   └── topics.py                     # Kafka topic definitions
 │   │
-│   ├── utils/                            # Utilitários
+│   ├── utils/                            # Utilities
 │   │   ├── __init__.py
-│   │   ├── logger.py                     # Configuração de logs
-│   │   ├── file_watcher.py               # Monitoramento de arquivos (tail -f)
-│   │   └── timestamp.py                  # Manipulação de timestamps
+│   │   ├── logger.py                     # Logging configuration
+│   │   ├── file_watcher.py               # File monitoring (tail -f)
+│   │   └── timestamp.py                  # Timestamp manipulation
 │   │
-│   └── __main__.py                       # Ponto de entrada (opcional)
+│   └── __main__.py                       # Entry point (optional)
 │
-├── tests/                                # Testes
+├── tests/                                # Tests
 │   ├── __init__.py
-│   ├── test_producers.py                 # Testes dos produtores
-│   ├── test_consumers.py                 # Testes dos consumidores
-│   └── conftest.py                       # Configurações dos testes
+│   ├── test_producers.py                 # Producer tests
+│   ├── test_consumers.py                 # Consumer tests
+│   └── conftest.py                       # Test configuration
 │
-├── scripts/                              # Scripts de suporte
-│   ├── create_topics.sh                  # Cria os tópicos no Kafka
-│   ├── delete_topics.sh                  # Remove os tópicos
-│   └── start_producers.sh                # Inicia todos os produtores
+├── scripts/                              # Support scripts
+│   ├── create_topics.sh                  # Creates Kafka topics
+│   ├── delete_topics.sh                  # Removes Kafka topics
+│   └── start_producers.sh                # Starts all producers
 │
-├── data/                                 # Dados locais (opcional)
-│   └── logs/                             # Logs gerados pelo projeto
+├── data/                                 # Local data (optional)
+│   └── logs/                             # Project-generated logs
 │
-└── mermaid-diagrams/                     # Diagramas Mermaid do projeto
+└── mermaid-diagrams/                     # Project Mermaid diagrams
 ```
+
 
 ---
 
-## 📄 **Detalhamento dos arquivos principais**
+## 📄 **Main Files Breakdown**
 
-### **Produtores (src/producers/)**
+### **Producers (src/producers/)**
 
-| Arquivo | Descrição |
-|---------|-----------|
-| `base_producer.py` | Classe abstrata com métodos comuns (conexão Kafka, envio de mensagens, tratamento de erros) |
-| `pi_hole_file_monitor.py` | Monitora `/var/log/pihole/pihole.log` usando `file_watcher.py` e envia linhas para o tópico `pi-hole.logs.file` |
-| `pi_hole_api_logs_poller.py` | Faz polling do endpoint `/api/logs/dnsmasq` a cada N segundos e envia para `pi-hole.logs.api` |
-| `pi_hole_data_poller.py` | Consulta endpoints `/devices`, `/top_clients`, `/upstreams`, `/ftl`, `/system`, `/queries` e envia para `pi-hole.data.endpoints` |
-| `public_api_fetcher.py` | Faz requisições a APIs públicas (ip-api, viacep, etc.) e envia para `public.api.data` |
-| `random_api_fetcher.py` | Consulta `http://localhost:5000/random` e envia para `random.data.raw` |
+| File | Description |
+|------|-------------|
+| `base_producer.py` | Abstract class with common methods (Kafka connection, message sending, error handling) |
+| `pi_hole_file_monitor.py` | Monitors `/var/log/pihole/pihole.log` using `file_watcher.py` and sends lines to topic `pi-hole.logs.file` |
+| `pi_hole_api_logs_poller.py` | Polls the `/api/logs/dnsmasq` endpoint every N seconds and sends to `pi-hole.logs.api` |
+| `pi_hole_data_poller.py` | Queries endpoints `/devices`, `/top_clients`, `/upstreams`, `/ftl`, `/system`, `/queries` and sends to `pi-hole.data.endpoints` |
+| `public_api_fetcher.py` | Makes requests to public APIs (ip-api, viacep, etc.) and sends to `public.api.data` |
+| `random_api_fetcher.py` | Queries `http://localhost:5000/random` and sends to `random.data.raw` |
 
-### **Consumidores (src/consumers/)**
+### **Consumers (src/consumers/)**
 
-| Arquivo | Descrição |
-|---------|-----------|
-| `base_consumer.py` | Classe abstrata com métodos comuns (conexão Kafka, consumo de mensagens, processamento) |
-| `consumer_1_logs.py` | Inscreve-se nos tópicos `pi-hole.logs.file` e `pi-hole.logs.api` e processa logs DNS |
-| `consumer_2_metrics.py` | Inscreve-se no tópico `pi-hole.data.endpoints` e processa métricas (dispositivos, top clientes, upstreams, FTL, sistema, queries) |
-| `consumer_3_external.py` | Inscreve-se nos tópicos `public.api.data` e `random.data.raw` e processa dados externos |
+| File | Description |
+|------|-------------|
+| `base_consumer.py` | Abstract class with common methods (Kafka connection, message consumption, processing) |
+| `consumer_1_logs.py` | Subscribes to topics `pi-hole.logs.file` and `pi-hole.logs.api` and processes DNS logs |
+| `consumer_2_metrics.py` | Subscribes to topic `pi-hole.data.endpoints` and processes metrics (devices, top clients, upstreams, FTL, system, queries) |
+| `consumer_3_external.py` | Subscribes to topics `public.api.data` and `random.data.raw` and processes external data |
 
-### **Serviços (src/services/)**
+### **Services (src/services/)**
 
-| Arquivo | Descrição |
-|---------|-----------|
-| `api_client.py` | Cliente HTTP reutilizável para chamar APIs externas (tratamento de erros, retry, timeouts) |
-| `random_api_server.py` | Servidor Flask que gera dados aleatórios em `/random` |
-| `kafka_client.py` | Encapsula a conexão com Kafka (produção e consumo) |
+| File | Description |
+|------|-------------|
+| `api_client.py` | Reusable HTTP client for calling external APIs (error handling, retry, timeouts) |
+| `random_api_server.py` | Flask server that generates random data at `/random` |
+| `kafka_client.py` | Encapsulates Kafka connection (production and consumption) |
 
-### **Modelos (src/models/)**
+### **Models (src/models/)**
 
-| Arquivo | Descrição |
-|---------|-----------|
-| `pi_hole_log.py` | Schema para logs do Pi-hole (timestamp, cliente, domínio, status) |
-| `pi_hole_metric.py` | Schema para métricas (dispositivos, top clientes, upstreams, etc.) |
-| `public_api_data.py` | Schema para dados de APIs públicas (geolocalização, etc.) |
-| `random_data.py` | Schema para dados aleatórios (id, valor, categoria, timestamp) |
+| File | Description |
+|------|-------------|
+| `pi_hole_log.py` | Schema for Pi-hole logs (timestamp, client, domain, status) |
+| `pi_hole_metric.py` | Schema for metrics (devices, top clients, upstreams, etc.) |
+| `public_api_data.py` | Schema for public API data (geolocation, etc.) |
+| `random_data.py` | Schema for random data (id, value, category, timestamp) |
 
-### **Configuração (src/config/)**
+### **Configuration (src/config/)**
 
-| Arquivo | Descrição |
-|---------|-----------|
-| `settings.py` | Carrega variáveis do `.env` usando `python-dotenv` |
-| `topics.py` | Define constantes com os nomes dos tópicos |
+| File | Description |
+|------|-------------|
+| `settings.py` | Loads `.env` variables using `python-dotenv` |
+| `topics.py` | Defines constants with topic names |
 
-### **Utilitários (src/utils/)**
+### **Utilities (src/utils/)**
 
-| Arquivo | Descrição |
-|---------|-----------|
-| `logger.py` | Configura logging com níveis, cores e formato |
-| `file_watcher.py` | Monitora arquivos em tempo real (tail -f) |
-| `timestamp.py` | Funções para manipulação de timestamps (formatação, conversão) |
+| File | Description |
+|------|-------------|
+| `logger.py` | Configures logging with levels, colors, and format |
+| `file_watcher.py` | Monitors files in real-time (tail -f) |
+| `timestamp.py` | Functions for timestamp manipulation (formatting, conversion) |
 
 ### **Scripts (scripts/)**
 
-| Arquivo | Descrição |
-|---------|-----------|
-| `create_topics.sh` | Cria os tópicos no Kafka: `pi-hole.logs.file`, `pi-hole.logs.api`, `pi-hole.data.endpoints`, `public.api.data`, `random.data.raw` |
-| `delete_topics.sh` | Remove os tópicos (útil para limpeza) |
-| `start_producers.sh` | Inicia todos os produtores em background |
+| File | Description |
+|------|-------------|
+| `create_topics.sh` | Creates Kafka topics: `pi-hole.logs.file`, `pi-hole.logs.api`, `pi-hole.data.endpoints`, `public.api.data`, `random.data.raw` |
+| `delete_topics.sh` | Removes topics (useful for cleanup) |
+| `start_producers.sh` | Starts all producers in the background |
 
 ---
 
