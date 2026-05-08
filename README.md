@@ -15,10 +15,10 @@
 
 - [Overview](#overview)
 - [Architecture](#architecture)
+- [Project Structure](#project-structure)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)
-- [Project Structure](#project-structure)
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [Roadmap](#roadmap)
@@ -46,6 +46,101 @@ From there, **three independent consumers** subscribe to these topics and proces
 ---
 
 ## Architecture
+
+```mermaid
+flowchart TD
+    %% Nuvem da Internet
+    subgraph Internet [🌐 Internet]
+        direction TB
+        API1[APIs Públicas<br/>ip-api.com, viacep.com.br, etc.]
+    end
+
+    %% Rede Local (LAN)
+    subgraph RedeLocal [🏠 Rede Local - LAN]
+        direction TB
+        
+        subgraph PiHole [🖥️ Pi-hole Server]
+            direction TB
+            P1[Local File<br/>/var/log/pihole.log]
+            P2[API Endpoints<br/>/api/logs/dnsmasq<br/>/devices, /top_clients, /upstreams<br/>/ftl, /system, /queries]
+        end
+
+        subgraph PythonApp [🐍 Aplicação Python]
+            direction TB
+            
+            subgraph Producers [Produtores]
+                PF1[Pi-hole File Monitor]
+                PP1[Pi-hole API Logs Poller]
+                PP2[Pi-hole Data Poller]
+                PF2[Public API Fetcher]
+                PF3[Random API Fetcher]
+            end
+
+            subgraph Consumers [Consumidores]
+                C1[Consumer 1 - Logs]
+                C2[Consumer 2 - Métricas]
+                C3[Consumer 3 - Externos]
+            end
+            
+            subgraph Services [Serviços Internos]
+                S1[Random API Server<br/>Flask + Faker]
+                S2[Kafka Client]
+            end
+            
+            subgraph Models [Modelos de Dados]
+                M1[Schemas e Validação]
+            end
+        end
+
+        subgraph Kafka [📦 Kafka Cluster]
+            K1[Broker 1<br/>localhost:9092]
+            K2[Zookeeper]
+        end
+
+        subgraph Database [🗄️ PostgreSQL]
+            DB1[Banco de Dados]
+        end
+    end
+
+    %% Conexões entre componentes
+    API1 -->|HTTP| PF2
+    PF2 -->|Produz| K1
+    
+    P1 -->|Leitura| PF1
+    PF1 -->|Produz| K1
+    
+    P2 -->|API| PP1
+    PP1 -->|Produz| K1
+    P2 -->|API| PP2
+    PP2 -->|Produz| K1
+    
+    S1 -->|Gera| PF3
+    PF3 -->|Produz| K1
+
+    K1 -->|Consome| C1
+    K1 -->|Consome| C2
+    K1 -->|Consome| C3
+
+    C1 -->|Persiste| DB1
+    C2 -->|Persiste| DB1
+    C3 -->|Persiste| DB1
+
+    %% Estilo
+    classDef internet fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef lan fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef pihole fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef python fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    classDef kafka fill:#fff8e1,stroke:#bf360c,stroke-width:2px
+    classDef db fill:#e0f2f1,stroke:#004d40,stroke-width:2px
+
+    class Internet internet
+    class RedeLocal lan
+    class PiHole pihole
+    class PythonApp python
+    class Kafka kafka
+    class Database db
+
+```
 
 ```
 ┌──────────────────────────┐     ┌────────────────────────────────────────┐
@@ -85,103 +180,18 @@ From there, **three independent consumers** subscribe to these topics and proces
                                  └───────────┘  └───────────┘  └───────────┘
 ```
 
----
-
-## Features
-
-- ✅ Pi-hole DNS logs via **local file** (real-time)
-- ✅ Pi-hole DNS logs via **API** (remote access)
-- ✅ Pi-hole metrics: devices, top clients, upstreams, FTL, system, queries
-- ✅ Multiple public APIs fetched as Kafka events
-- ✅ Localhost random data generator for testing
-- ✅ **Three independent consumers** for parallel processing
-- ✅ Configurable topics, consumer groups, and partitioning
-- ✅ Designed for local development with Docker Compose
+Legenda:
+Cor	Componente	Descrição
+🔵 Azul claro	🌐 Internet	APIs públicas externas (acesso via HTTP)
+🟣 Roxo claro	🏠 Rede Local	Ambiente interno da rede local
+🟡 Laranja claro	🖥️ Pi-hole Server	Servidor Pi-hole com logs locais e API
+🟢 Verde claro	🐍 Aplicação Python	Código Python com produtores, consumidores e serviços
+🟡 Amarelo claro	📦 Kafka Cluster	Cluster Kafka para streaming de eventos
+🟢 Azul esverdeado	🗄️ PostgreSQL	Banco de dados para persistência
 
 ---
 
-## Tech Stack
-
-| Layer          | Technology                          |
-|----------------|-------------------------------------|
-| **Messaging**  | Apache Kafka                        |
-| **Producers**  | Python + `kafka-python`             |
-| **Consumers**  | Python microservices                |
-| **HTTP**       | `requests`                          |
-| **APIs**       | Pi-hole, ip-api.com, viacep.com.br, Localhost Random API |
-| **Data**       | `pandas`                            |
-| **Database**   | PostgreSQL + `psycopg2-binary`      |
-| **Config**     | `python-dotenv`                     |
-| **Containers** | Docker + Docker Compose             |
-| **Dev tools**  | `venv`, `Flask` (for localhost API) |
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- Python 3.10+
-- Docker & Docker Compose
-- Pi-hole instance accessible on your network
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/SEU_USUARIO/kafka-n-apis.git
-cd kafka-n-apis
-```
-
-### 2. Start Kafka and Zookeeper
-
-```bash
-docker compose up -d
-```
-
-> Uses `bitnami/kafka` and `bitnami/zookeeper`. Brokers available at `localhost:9092`.
-
-### 3. Install Python dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Configure environment
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` with your Pi-hole URL, API tokens, and Kafka bootstrap.
-
-### 5. Run the localhost random API (separate terminal)
-
-```bash
-python -m producer.random_api_server
-```
-
-> Runs a Flask server at `http://localhost:5000/random`
-
-### 6. Run the consumers (three separate terminals)
-
-**Consumer 1 (DNS logs):**
-```bash
-python -m consumers.consumer_1_logs
-```
-
-**Consumer 2 (Metrics and system data):**
-```bash
-python -m consumers.consumer_2_metrics
-```
-
-**Consumer 3 (External and synthetic data):**
-```bash
-python -m consumers.consumer_3_external
-```
-
----
-
-## 📁 **Project Structure (caprichada)**
+## 📁 **Project Structure**
 
 ```mermaid
 graph TD
@@ -374,8 +384,10 @@ kafka-n-apis/
 │   ├── delete_topics.sh                  # Remove os tópicos
 │   └── start_producers.sh                # Inicia todos os produtores
 │
-└── data/                                 # Dados locais (opcional)
-    └── logs/                             # Logs gerados pelo projeto
+├── data/                                 # Dados locais (opcional)
+│   └── logs/                             # Logs gerados pelo projeto
+│
+└── mermaid-diagrams/                     # Diagramas Mermaid do projeto
 ```
 
 ---
@@ -443,6 +455,100 @@ kafka-n-apis/
 | `start_producers.sh` | Inicia todos os produtores em background |
 
 ---
+
+---
+
+## Features
+
+- ✅ Pi-hole DNS logs via **local file** (real-time)
+- ✅ Pi-hole DNS logs via **API** (remote access)
+- ✅ Pi-hole metrics: devices, top clients, upstreams, FTL, system, queries
+- ✅ Multiple public APIs fetched as Kafka events
+- ✅ Localhost random data generator for testing
+- ✅ **Three independent consumers** for parallel processing
+- ✅ Configurable topics, consumer groups, and partitioning
+- ✅ Designed for local development with Docker Compose
+
+---
+
+## Tech Stack
+
+| Layer          | Technology                          |
+|----------------|-------------------------------------|
+| **Messaging**  | Apache Kafka                        |
+| **Producers**  | Python + `kafka-python`             |
+| **Consumers**  | Python microservices                |
+| **HTTP**       | `requests`                          |
+| **APIs**       | Pi-hole, ip-api.com, viacep.com.br, Localhost Random API |
+| **Data**       | `pandas`                            |
+| **Database**   | PostgreSQL + `psycopg2-binary`      |
+| **Config**     | `python-dotenv`                     |
+| **Containers** | Docker + Docker Compose             |
+| **Dev tools**  | `venv`, `Flask` (for localhost API) |
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.10+
+- Docker & Docker Compose
+- Pi-hole instance accessible on your network
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/SEU_USUARIO/kafka-n-apis.git
+cd kafka-n-apis
+```
+
+### 2. Start Kafka and Zookeeper
+
+```bash
+docker compose up -d
+```
+
+> Uses `bitnami/kafka` and `bitnami/zookeeper`. Brokers available at `localhost:9092`.
+
+### 3. Install Python dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Configure environment
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your Pi-hole URL, API tokens, and Kafka bootstrap.
+
+### 5. Run the localhost random API (separate terminal)
+
+```bash
+python -m producer.random_api_server
+```
+
+> Runs a Flask server at `http://localhost:5000/random`
+
+### 6. Run the consumers (three separate terminals)
+
+**Consumer 1 (DNS logs):**
+```bash
+python -m consumers.consumer_1_logs
+```
+
+**Consumer 2 (Metrics and system data):**
+```bash
+python -m consumers.consumer_2_metrics
+```
+
+**Consumer 3 (External and synthetic data):**
+```bash
+python -m consumers.consumer_3_external
+```
 
 ## Configuration
 
