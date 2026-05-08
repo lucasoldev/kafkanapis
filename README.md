@@ -6,9 +6,9 @@
 **Streaming Pi-hole DNS events, Public API data, and Localhost Random Data through Kafka**
 
 `Kafka n APIs` ingests data from three independent sources:
-- [Pi-hole](https://pi-hole.net/) DNS events
-- Multiple public APIs (geolocation, threat intelligence, etc.)
-- A **localhost random data generator API** (for testing, simulation, and integration)
+- **Pi-hole DNS logs** (via local file + API)
+- **Public APIs** (geolocation, threat intelligence, etc.)
+- **Localhost random data generator API** (for testing, simulation, and integration)
 
 All sources are published into Apache Kafka topics, where downstream consumers can process, correlate, and act on these event streams independently.
 
@@ -32,11 +32,15 @@ All sources are published into Apache Kafka topics, where downstream consumers c
 
 `Kafka n APIs` treats everything as an event stream. Three independent producers feed data into Kafka:
 
-1. **Pi-hole DNS logs** — real-time DNS queries from your network
-2. **Public APIs** — external data (geolocation, threat intelligence, domain reputation, etc.)
-3. **Localhost Random API** — synthetic data for testing, correlation, and simulation
+### 1. **Pi-hole DNS logs** – with dual ingestion strategy:
+   - **File monitoring**: Watches `/var/log/pihole/pihole.log` in real-time using a tail-like approach, ideal for local access.
+   - **API polling**: Queries `/api/logs/dnsmasq` (or `/api/logs/ftl`) periodically or on-demand, ideal for remote access.
 
-From there, independent consumer services subscribe to these topics and process the data in real-time — enabling correlation between real DNS traffic, external intelligence, and simulated patterns.
+### 2. **Public APIs** – external data (geolocation, threat intelligence, domain reputation, etc.)
+
+### 3. **Localhost Random API** – synthetic data for testing, correlation, and simulation.
+
+From there, independent consumer services subscribe to these topics and process the data in real-time.
 
 This design decouples data sources from processing logic, making it easy to add new APIs, swap consumers, or scale parts of the system independently.
 
@@ -45,36 +49,47 @@ This design decouples data sources from processing logic, making it easy to add 
 ## Architecture
 
 ```
-┌──────────────┐     ┌────────────────────────────────────────┐
-│   Pi-hole    │────▶│                                        │
-│  DNS logs    │     │                                        │
-└──────────────┘     │                                        │
-                     │              Apache Kafka              │
-┌──────────────┐     │                                        │
-│  Public APIs │────▶│                                        │
-│  (multiple)  │     │                                        │
-└──────────────┘     │                                        │
-                     │                                        │
-┌──────────────┐     │                                        │
-│  Localhost   │────▶│                                        │
-│  Random API  │     │                                        │
-└──────────────┘     └────────────┬──────────────┬────────────┘
-                                  │              │
+┌──────────────────────────┐     ┌────────────────────────────────────────┐
+│    Pi-hole (local)      │────▶│                                        │
+│  /var/log/pihole.log    │     │                                        │
+└──────────────────────────┘     │                                        │
+                                 │              Apache Kafka              │
+┌──────────────────────────┐     │                                        │
+│    Pi-hole (API)        │────▶│                                        │
+│  /api/logs/dnsmasq      │     │                                        │
+└──────────────────────────┘     │                                        │
+                                 │                                        │
+┌──────────────────────────┐     │                                        │
+│    Public APIs           │────▶│                                        │
+│  (multiple)              │     │                                        │
+└──────────────────────────┘     └────────────┬──────────────┬────────────┘
+                                 │              │
+┌──────────────────────────┐     │              │
+│    Localhost Random API  │────▶│              │
+└──────────────────────────┘     │              │
+                                 │              │
                           ┌───────▼───┐  ┌───────▼───┐
                           │ Consumer  │  │ Consumer  │
                           │  Service  │  │  Service  │
                           └───────────┘  └───────────┘
 ```
 
-1. **Producers** — Pi-hole logs, public APIs, and localhost random API all publish into Kafka topics.
-2. **Broker** — Kafka cluster receiving, storing, and distributing all event streams.
-3. **Consumers** — Independent services subscribing to topics, processing and correlating data from multiple sources.
+1. **Producers**
+   - `Pi-hole file producer` → tailing `pihole.log`
+   - `Pi-hole API producer` → polling `/api/logs/dnsmasq`
+   - `Public API producer` → various external APIs
+   - `Random API producer` → localhost generator
+
+2. **Broker** → Kafka cluster receiving, storing, and distributing all event streams.
+
+3. **Consumers** → Independent services subscribing to topics, processing and correlating data from multiple sources.
 
 ---
 
 ## Features
 
-- ✅ Pi-hole DNS queries ingested into Kafka in real-time
+- ✅ Pi-hole DNS logs via **local file monitoring** (real-time)
+- ✅ Pi-hole DNS logs via **API polling** (remote access)
 - ✅ Multiple public APIs fetched and published as Kafka events
 - ✅ Localhost random data generator API for testing and simulation
 - ✅ Independent consumer services processing different topics
@@ -107,7 +122,7 @@ This design decouples data sources from processing logic, making it easy to add 
 
 - Python 3.10+
 - Docker & Docker Compose
-- Pi-hole instance accessible on your network
+- Pi-hole instance accessible on your network (either local or remote)
 
 ### 1. Clone the repository
 
@@ -152,9 +167,23 @@ python -m producer.random_api_server
 
 ### 6. Run the producers
 
+**Pi-hole (file monitor)** – watch local log file:
 ```bash
-python -m producer.pi_hole_ingest
+python -m producer.pi_hole_file_monitor
+```
+
+**Pi-hole (API poller)** – fetch logs via API:
+```bash
+python -m producer.pi_hole_api_poller
+```
+
+**Public APIs:**
+```bash
 python -m producer.api_fetcher
+```
+
+**Random API:**
+```bash
 python -m producer.random_api_fetcher
 ```
 
@@ -175,9 +204,10 @@ kafka-n-apis/
 ├── requirements.txt
 ├── README.md
 ├── producer/
-│   ├── pi_hole_ingest.py       # Pi-hole DNS logs → Kafka
-│   ├── api_fetcher.py          # Public APIs → Kafka
-│   └── random_api_fetcher.py   # Localhost random API → Kafka
+│   ├── pi_hole_file_monitor.py   # Tailing pihole.log → Kafka
+│   ├── pi_hole_api_poller.py     # Fetching /api/logs/dnsmasq → Kafka
+│   ├── api_fetcher.py            # Public APIs → Kafka
+│   └── random_api_fetcher.py     # Localhost random API → Kafka
 ├── consumers/
 │   ├── event_processor.py      # Process and correlate events
 │   └── alert_service.py        # Alerting based on patterns
@@ -200,9 +230,10 @@ kafka-n-apis/
 | `KAFKA_BOOTSTRAP`     | Kafka bootstrap server          | `localhost:9092`  |
 | `PIHOLE_URL`          | Pi-hole admin API URL           | —                 |
 | `PIHOLE_API_TOKEN`    | Pi-hole API token               | —                 |
+| `PIHOLE_LOG_PATH`     | Path to local pihole.log        | `/var/log/pihole/pihole.log` |
 | `RANDOM_API_URL`      | Localhost random API URL        | `http://localhost:5000/random` |
 | `RANDOM_API_INTERVAL` | Seconds between API calls       | `5`               |
-| `DNS_QUERIES_TOPIC`   | Kafka topic for DNS queries     | `pi-hole.dns.raw` |
+| `DNS_LOGS_TOPIC`      | Kafka topic for DNS logs        | `pi-hole.dns.raw` |
 | `API_DATA_TOPIC`      | Kafka topic for public API data | `public.api.data` |
 | `RANDOM_DATA_TOPIC`   | Kafka topic for random data     | `random.data.raw` |
 
@@ -210,10 +241,16 @@ kafka-n-apis/
 
 ## Usage
 
-**Produce Pi-hole events:**
+**Monitor Pi-hole logs locally (file):**
 
 ```bash
-python -m producer.pi_hole_ingest
+python -m producer.pi_hole_file_monitor
+```
+
+**Fetch Pi-hole logs via API (remote):**
+
+```bash
+python -m producer.pi_hole_api_poller
 ```
 
 **Produce public API data:**
@@ -251,3 +288,26 @@ docker exec -it kafka kafka-topics.sh --list --bootstrap-server localhost:9092
 - [ ] Kubernetes manifests
 - [ ] Correlation engine between Pi-hole and random data
 - [ ] Localhost API with configurable schemas
+- [ ] **Pi-hole log file monitoring** (✅ implemented)
+- [ ] **Pi-hole log API polling** (✅ implemented)
+
+---
+
+## 📍 **Notas sobre a implementação dos dois métodos**
+
+### **1. Monitoramento de arquivo local (`pi_hole_file_monitor.py`)**
+
+Este produtor usa `tail -f` (ou equivalente em Python com `subprocess`) para acompanhar o arquivo `/var/log/pihole/pihole.log` em tempo real. Cada nova linha do log é parseada, transformada em JSON e enviada para o Kafka.
+
+**Vantagens:** Baixa latência, detecção imediata de novos eventos.
+
+**Limitações:** Requer acesso SSH ou local ao Pi-hole.
+
+### **2. Polling via API (`pi_hole_api_poller.py`)**
+
+Este produtor faz requisições periódicas (ex: a cada 5 segundos) ao endpoint `/api/logs/dnsmasq` para obter as últimas N linhas do log. Cada resposta é processada e enviada ao Kafka.
+
+**Vantagens:** Acesso remoto, não precisa de SSH.
+
+**Limitações:** Latência adicional (devido ao intervalo de polling), pode não capturar eventos entre as consultas.
+
