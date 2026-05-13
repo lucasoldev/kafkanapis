@@ -17,12 +17,31 @@ def parse_pihole_log_line(line):
         parts = line.strip().split()
         if len(parts) >= 5:
             timestamp = f"{parts[0]} {parts[1]} {parts[2]}"
-            client_ip = parts[3]
-            domain = parts[4].replace(':', '')
+            
+            # Tentar encontrar o IP do cliente (se houver "from <IP>")
+            client_ip = None
+            for i, part in enumerate(parts):
+                if part == 'from' and i + 1 < len(parts):
+                    client_ip = parts[i + 1]
+                    break
+            
+            # Extrair o domínio (geralmente após o "cached" ou "query")
+            domain = None
+            for i, part in enumerate(parts):
+                if part == 'cached' and i + 1 < len(parts):
+                    domain = parts[i + 1]
+                    break
+                if part == 'query' and i + 2 < len(parts):
+                    domain = parts[i + 2]
+                    break
+                if part == 'gravity' and i + 2 < len(parts):
+                    domain = parts[i + 2]
+                    break
+            
             return {
                 'timestamp': timestamp,
-                'client_ip': client_ip,
-                'domain': domain,
+                'client_ip': client_ip if client_ip else 'unknown',
+                'domain': domain if domain else 'unknown',
                 'raw': line.strip()
             }
         return {'raw': line.strip()}
