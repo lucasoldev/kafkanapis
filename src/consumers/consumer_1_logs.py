@@ -3,7 +3,7 @@ import psycopg2
 from confluent_kafka import Consumer
 from config import config
 
-# Configurações do PostgreSQL
+
 PG_HOST = 'localhost'
 PG_PORT = config.POSTGRES_PORT
 PG_DB = config.POSTGRES_DB
@@ -11,7 +11,6 @@ PG_USER = config.POSTGRES_USER
 PG_PASSWORD = config.POSTGRES_PASSWORD
 
 def connect_db():
-    """Connect to PostgreSQL and return the connection."""
     conn = psycopg2.connect(
         host=PG_HOST,
         port=PG_PORT,
@@ -22,7 +21,6 @@ def connect_db():
     return conn
 
 def insert_log(conn, data):
-    """Insert a log line into the database."""
     cur = conn.cursor()
     cur.execute("""
         INSERT INTO dns_logs (timestamp, client_ip, domain, raw, source, timestamp_epoch)
@@ -39,7 +37,6 @@ def insert_log(conn, data):
     cur.close()
 
 def consume_logs():
-    """Consume messages from Kafka and insert into PostgreSQL."""
     conf = {
         'bootstrap.servers': config.KAFKA_BOOTSTRAP,
         'group.id': 'logs-consumer-group',
@@ -54,7 +51,7 @@ def consume_logs():
     
     try:
         while True:
-            msg = consumer.poll(1.0)  # Timeout de 1 segundo
+            msg = consumer.poll(1.0)
             if msg is None:
                 continue
             if msg.error():
@@ -63,7 +60,7 @@ def consume_logs():
             
             data = json.loads(msg.value().decode('utf-8'))
             insert_log(conn, data)
-            print(f"📥 Inserted: {data.get('domain', 'unknown')} @ {data.get('timestamp', 'unknown')}")
+            print(f"📥 Inserted: {data.get('domain', 'unknown')}")
     except KeyboardInterrupt:
         print("\n🛑 Consumer interrupted.")
     finally:

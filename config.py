@@ -23,7 +23,6 @@ class Config:
     # Kafka
     KAFKA_BOOTSTRAP = os.getenv('KAFKA_BOOTSTRAP')
     PIHOLE_LOG_TOPIC = os.getenv('PIHOLE_LOG_TOPIC')
-    KAFKA_HOST_IP = os.getenv('KAFKA_HOST_IP')
     
     # PostgreSQL
     POSTGRES_USER = os.getenv('POSTGRES_USER')
