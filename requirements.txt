@@ -1,5 +1,5 @@
 # Kafka
-kafka-python==2.0.2
+confluent_kafka==2.14.0
 
 # Data
 pandas==2.2.3
