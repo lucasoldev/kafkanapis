@@ -29,7 +29,7 @@
 
 | Source | Description |
 |--------|-------------|
-| **Pi-hole (local)** | Tails `/var/log/pihole/pihole.log` |
+| **Pi-hole (local)** | Tails `/var/log/pihole/pihole.log` from a **systemd service on a Raspberry Pi** |
 | **Pi-hole (API logs)** | Polls `/api/logs/dnsmasq` |
 | **Pi-hole (API)** | Fetches `/devices`, `/top_clients`, `/upstreams`, `/ftl`, `/system`, `/queries` |
 | **Public APIs** | External data from multiple free test APIs |
@@ -47,23 +47,24 @@ From there, **three independent consumers** subscribe to these topics and proces
 
 ![Architecture Diagram](mermaid-diagrams/architecture.png)
 
-**Legend:**
+## 🎨 **Legend**
 
 | Color | Component | Description |
 |-------|-----------|-------------|
-| 🔵 Light Blue | 🌐 Internet | External public APIs (HTTP access) |
-| 🟣 Light Purple | 🏠 Local Network | Internal local network environment |
-| 🟡 Light Orange | 🖥️ Pi-hole Server | Pi-hole server with local logs and API |
-| 🟢 Light Green | 🐍 Python Application | Python code with producers, consumers, and services |
-| 🟡 Light Yellow | 📦 Kafka Cluster | Kafka cluster for event streaming |
-| 🟢 Teal | 🗄️ PostgreSQL | Database for persistence |
-
+| 🔵 Light Blue | 🌐 Internet | External public APIs |
+| 🟣 Light Purple | 🖥️ Raspberry Pi | Raspberry Pi running the producer service |
+| 🟡 Light Orange | Pi-hole Server | Pi-hole server with local logs and API |
+| 🟢 Light Green | Producer Service | Systemd service running the Pi-hole log producer |
+| 🟡 Light Yellow | 🖥️ Your Windows PC | Your local computer (Kafka, consumers, other services) |
+| 🟢 Teal | 🐍 Python Application | Python code with consumers and services |
+| 🟠 Orange | 📦 Kafka Cluster | Kafka cluster running in Docker |
+| 🔵 Dark Blue | 🗄️ PostgreSQL | Database for persistence |
 
 ---
 
 ## 📁 **Project Structure**
 
-![Project Structure](mermaid-diagrams/project_structure_readme_friendly.png)
+![Project Structure](mermaid-diagrams/project_structure.png)
 
 ### 🗂️ Directory Tree
 
@@ -76,13 +77,12 @@ kafka-n-apis/
 ├── .gitignore                            # Files ignored by Git
 ├── Makefile                              # Useful commands (optional)
 │
-├── src/                                  # Main source code
+├── src/                                  # Main source code (Windows)
 │   ├── __init__.py
 │   │
 │   ├── producers/                        # Producers (send data to Kafka)
 │   │   ├── __init__.py
 │   │   ├── base_producer.py              # Base class for producers
-│   │   ├── pi_hole_file_monitor.py       # Tailing pihole.log → Kafka
 │   │   ├── pi_hole_api_logs_poller.py    # Fetching /api/logs/dnsmasq → Kafka
 │   │   ├── pi_hole_data_poller.py        # Fetching /devices, /top_clients, /upstreams, etc.
 │   │   ├── public_api_fetcher.py         # Public APIs → Kafka
@@ -136,25 +136,35 @@ kafka-n-apis/
 │   └── logs/                             # Project-generated logs
 │
 └── mermaid-diagrams/                     # Project Mermaid diagrams
-```
 
+### 🗂️ Raspberry Pi Directory
+
+On your Raspberry Pi, the producer service is located at:
+
+```
+/home/pi/kafka-pihole-producer/
+├── .env                                  # Environment variables
+├── config.py                             # Configuration loader
+├── producer.py                           # Pi-hole log producer script
+├── venv/                                 # Python virtual environment
+└── /etc/systemd/system/kafka-pihole-producer.service  # Systemd service file
+```
 
 ---
 
 ## 📄 **Main Files Breakdown**
 
-### **Producers (src/producers/)**
+### **Producers (src/producers/ - Windows)**
 
 | File | Description |
 |------|-------------|
 | `base_producer.py` | Abstract class with common methods (Kafka connection, message sending, error handling) |
-| `pi_hole_file_monitor.py` | Monitors `/var/log/pihole/pihole.log` using `file_watcher.py` and sends lines to topic `pi-hole.logs.file` |
 | `pi_hole_api_logs_poller.py` | Polls the `/api/logs/dnsmasq` endpoint every N seconds and sends to `pi-hole.logs.api` |
 | `pi_hole_data_poller.py` | Queries endpoints `/devices`, `/top_clients`, `/upstreams`, `/ftl`, `/system`, `/queries` and sends to `pi-hole.data.endpoints` |
 | `public_api_fetcher.py` | Makes requests to public APIs (ip-api, viacep, etc.) and sends to `public.api.data` |
 | `random_api_fetcher.py` | Queries `http://localhost:5000/random` and sends to `random.data.raw` |
 
-### **Consumers (src/consumers/)**
+### **Consumers (src/consumers/ - Windows)**
 
 | File | Description |
 |------|-------------|
@@ -163,7 +173,7 @@ kafka-n-apis/
 | `consumer_2_metrics.py` | Subscribes to topic `pi-hole.data.endpoints` and processes metrics (devices, top clients, upstreams, FTL, system, queries) |
 | `consumer_3_external.py` | Subscribes to topics `public.api.data` and `random.data.raw` and processes external data |
 
-### **Services (src/services/)**
+### **Services (src/services/ - Windows)**
 
 | File | Description |
 |------|-------------|
@@ -171,7 +181,7 @@ kafka-n-apis/
 | `random_api_server.py` | Flask server that generates random data at `/random` |
 | `kafka_client.py` | Encapsulates Kafka connection (production and consumption) |
 
-### **Models (src/models/)**
+### **Models (src/models/ - Windows)**
 
 | File | Description |
 |------|-------------|
@@ -180,14 +190,14 @@ kafka-n-apis/
 | `public_api_data.py` | Schema for public API data (geolocation, etc.) |
 | `random_data.py` | Schema for random data (id, value, category, timestamp) |
 
-### **Configuration (src/config/)**
+### **Configuration (src/config/ - Windows)**
 
 | File | Description |
 |------|-------------|
 | `settings.py` | Loads `.env` variables using `python-dotenv` |
 | `topics.py` | Defines constants with topic names |
 
-### **Utilities (src/utils/)**
+### **Utilities (src/utils/ - Windows)**
 
 | File | Description |
 |------|-------------|
@@ -195,7 +205,7 @@ kafka-n-apis/
 | `file_watcher.py` | Monitors files in real-time (tail -f) |
 | `timestamp.py` | Functions for timestamp manipulation (formatting, conversion) |
 
-### **Scripts (scripts/)**
+### **Scripts (scripts/ - Windows)**
 
 | File | Description |
 |------|-------------|
@@ -205,12 +215,11 @@ kafka-n-apis/
 
 ---
 
-
 ## ✨ Features
 
 | Category | Feature |
 |----------|---------|
-| **Pi-hole Integration** | ✅ DNS logs via local file (real-time) |
+| **Pi-hole Integration** | ✅ DNS logs via local file (real-time) from a **Raspberry Pi systemd service** |
 |  | ✅ DNS logs via API (remote access) |
 |  | ✅ Metrics: devices, top clients, upstreams, FTL, system, queries |
 | **External APIs** | ✅ Multiple public APIs fetched as Kafka events |
@@ -228,7 +237,7 @@ kafka-n-apis/
 | Layer          | Technology |
 |----------------|------------|
 | **Messaging**  | [Apache Kafka](https://kafka.apache.org/) |
-| **Producers**  | [Python](https://www.python.org/) + [`kafka-python`](https://kafka-python.readthedocs.io/) |
+| **Producers**  | [Python](https://www.python.org/) + [`kafka-python`](https://kafka-python.readthedocs.io/) (Raspberry Pi + Windows) |
 | **Consumers**  | Python microservices |
 | **HTTP**       | [`requests`](https://docs.python-requests.org/) |
 | **APIs**       | [Pi-hole](https://pi-hole.net/), [ip-api.com](https://ip-api.com/), [viacep.com.br](https://viacep.com.br/), Localhost Random API |
@@ -247,6 +256,7 @@ kafka-n-apis/
 - Python 3.10+
 - Docker & Docker Compose
 - Pi-hole instance accessible on your network
+- A Raspberry Pi (optional, if running the local log producer remotely)
 
 ### 1. Clone the repository
 
@@ -261,7 +271,7 @@ cd kafka-n-apis
 docker-compose up -d
 ```
 
-> Uses `bitnami/kafka` and `bitnami/zookeeper`. Brokers available at `localhost:9092`.
+> Uses `apache/kafka:latest` (KRaft mode). Brokers available at `localhost:9092`.
 
 **Verify Kafka is running:**
 
@@ -271,7 +281,7 @@ docker ps | grep kafka
 
 **Expected output:**
 ```
-<container_id>   bitnami/kafka:latest   "/opt/bitnami/script…"   Up  0.0.0.0:9092->9092/tcp
+<container_id>   apache/kafka:latest   "/opt/kafka/bin/kafka…"   Up  0.0.0.0:9092->9092/tcp
 ```
 
 ### 3. Install Python dependencies
@@ -288,7 +298,26 @@ cp .env.example .env
 
 Edit `.env` with your Pi-hole URL, API tokens, and Kafka bootstrap.
 
-### 5. Run the localhost random API (separate terminal)
+### 5. Configure the Raspberry Pi producer (if using local logs)
+
+**On your Raspberry Pi:**
+
+```bash
+cd /home/pi/kafka-pihole-producer
+cp .env.example .env
+# Edit .env with your Windows PC IP address for KAFKA_BOOTSTRAP
+
+# Create and activate virtual environment
+python3 -m venv venv
+source venv/bin/activate
+pip install kafka-python python-dotenv
+
+# Enable and start the systemd service
+sudo systemctl enable kafka-pihole-producer
+sudo systemctl start kafka-pihole-producer
+```
+
+### 6. Run the localhost random API (separate terminal on Windows)
 
 ```bash
 python -m src.services.random_api_server
@@ -296,7 +325,7 @@ python -m src.services.random_api_server
 
 > Runs a Flask server at `http://localhost:5000/random` powered by `Faker`.
 
-### 6. Run the consumers (three separate terminals)
+### 7. Run the consumers (three separate terminals on Windows)
 
 **Consumer 1 (DNS logs):**
 ```bash
@@ -311,12 +340,6 @@ python -m src.consumers.consumer_2_metrics
 **Consumer 3 (External and synthetic data):**
 ```bash
 python -m src.consumers.consumer_3_external
-```
-
-### 7. Verify consumers are running (optional)
-
-```bash
-ps aux | grep consumer
 ```
 
 ---
@@ -334,7 +357,7 @@ docker exec -it kafka bash
 **Produce a test message:**
 
 ```bash
-echo "test" | kafka-console-producer --broker-list localhost:9092 --topic test
+echo "test" | kafka-console-producer --bootstrap-server localhost:9092 --topic test
 ```
 
 **Consume the test message:**
@@ -395,7 +418,7 @@ python -m src.consumers.consumer_3_external
 | `PIHOLE_API_TOKEN`    | Pi-hole API token               | —                 |
 | `PIHOLE_LOG_PATH`     | Path to local pihole.log        | `/var/log/pihole/pihole.log` |
 | `RANDOM_API_URL`      | Localhost random API URL        | `http://localhost:5000/random` |
-
+| `KAFKA_BOOTSTRAP_RPI` | Kafka bootstrap for Raspberry Pi | `YOUR_WINDOWS_IP:9092` |
 
 ---
 
