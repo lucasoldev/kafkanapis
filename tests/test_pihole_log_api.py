@@ -6,14 +6,13 @@ from config import config
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-# Usa PIHOLE_BASE_URL diretamente
 PIHOLE_URL = config.PIHOLE_BASE_URL.rstrip('/')
 PASSWORD = config.PIHOLE_ADM_PWD
 
 def get_sid():
     """Authenticate with the Pi-hole API and return the SID."""
     if not PASSWORD:
-        print("❌ Password not defined in config (PIHOLE_ADM_PWD).")
+        print("❌ Password not defined in config.")
         return None
     
     url = f"{PIHOLE_URL}/auth"
@@ -33,24 +32,41 @@ def get_sid():
             print(f"⚠️ Attempt {attempt+1}: Error - {e}")
         time.sleep(2)
     
-    print("❌ Failed to obtain SID after multiple attempts.")
+    print("❌ Failed to obtain SID.")
     return None
 
-def use_sid(endpoint, sid):
-    """Use SID to access a protected endpoint."""
-    url = f"{PIHOLE_URL}{endpoint}?sid={sid}"
+def get_logs(endpoint, sid, nextID=None):
+    """Fetch logs from a Pi-hole endpoint with optional nextID."""
+    url = f"{PIHOLE_URL}{endpoint}"
+    params = {"sid": sid}
+    if nextID is not None:
+        params["nextID"] = nextID
+    
     try:
-        response = requests.get(url, verify=False)
+        response = requests.get(url, params=params, verify=False)
         response.raise_for_status()
         return response.json()
-    except:
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Error accessing {endpoint}: {e}")
         return None
 
 if __name__ == "__main__":
     sid = get_sid()
-    if sid:
-        for endpoint in ["/dns/blocking", "/stats/summary", "/stats/top_domains"]:
-            data = use_sid(endpoint, sid)
-            if data:
-                print(f"\n📊 Response from {endpoint}:")
-                print(json.dumps(data, indent=2))
+    if not sid:
+        exit(1)
+    
+    endpoints = ["/logs/dnsmasq", "/logs/ftl", "/logs/webserver"]
+    
+    for endpoint in endpoints:
+        print(f"\n📡 Fetching logs from {endpoint}")
+        data = get_logs(endpoint, sid, nextID=0)
+        if data and "log" in data:
+            print(f"✅ Got {len(data['log'])} lines")
+            print(f"📄 nextID: {data.get('nextID')}")
+            print(f"📂 File: {data.get('file')}")
+            if data['log']:
+                for entry in data['log'][:1]:  # Apenas o primeiro registro
+                    print(f"  🕐 {entry.get('timestamp')}")
+                    print(f"  📝 {entry.get('message')}")
+        else:
+            print("❌ No logs or error.")
