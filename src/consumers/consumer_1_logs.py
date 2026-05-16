@@ -1,8 +1,16 @@
 import json
 import psycopg2
+import sys
+import re
 from datetime import datetime
 from confluent_kafka import Consumer
 from config import config
+
+# --- Test mode ---
+TEST_MODE = "--test" in sys.argv
+if TEST_MODE:
+    print("🧪 Running in TEST MODE - no data will be inserted into the database")
+    print("=" * 60)
 
 # PostgreSQL settings (from config)
 PG_HOST = 'localhost'
@@ -29,7 +37,6 @@ def insert_log(conn, data):
     # Convert timestamp from "May 14 00:40:02" to "2026-05-14 00:40:02"
     raw_timestamp = data.get('timestamp')
     try:
-        # Parse the log timestamp (assuming current year)
         dt = datetime.strptime(raw_timestamp, '%b %d %H:%M:%S')
         dt = dt.replace(year=datetime.now().year)
         timestamp = dt.strftime('%Y-%m-%d %H:%M:%S')
@@ -50,9 +57,85 @@ def insert_log(conn, data):
     conn.commit()
     cur.close()
 
+def parse_log_line(line):
+    """Parse a Pi-hole log line and extract timestamp, client_ip, and domain."""
+    parts = line.strip().split()
+    timestamp = f"{parts[0]} {parts[1]} {parts[2]}"
+    
+    # Default values
+    client_ip = "unknown"
+    domain = "unknown"
+    
+    # Pattern 1: "cached" or "cached-stale" - e.g. "cached-stale api.docker.com is 2600:..."
+    if "cached" in line:
+        # Domain is usually at position 4, IP at position 6
+        if len(parts) > 4:
+            domain = parts[4]
+            if len(parts) > 6:
+                ip = parts[6]
+                # Check if it looks like an IP address (IPv4 or IPv6)
+                if re.match(r'^(\d{1,3}\.){3}\d{1,3}$', ip) or ':' in ip:
+                    client_ip = ip
+        return {
+            'timestamp': timestamp,
+            'client_ip': client_ip,
+            'domain': domain,
+            'raw': line.strip()
+        }
+    
+    # Pattern 2: "from" - e.g. "query[A] google.com from 192.168.1.50"
+    if "from" in line:
+        # Find "from" and extract IP and domain
+        from_index = parts.index('from')
+        if from_index > 0 and from_index + 1 < len(parts):
+            client_ip = parts[from_index + 1]
+            # Domain is usually before "from"
+            if from_index > 2:
+                domain = parts[from_index - 1]
+        return {
+            'timestamp': timestamp,
+            'client_ip': client_ip,
+            'domain': domain,
+            'raw': line.strip()
+        }
+    
+    # Pattern 3: "gravity" - e.g. "gravity blocked sessions.bugsnag.com is 0.0.0.0"
+    if "gravity" in line:
+        # Domain is usually at position 3
+        if len(parts) > 3:
+            domain = parts[3]
+        return {
+            'timestamp': timestamp,
+            'client_ip': "gravity",
+            'domain': domain,
+            'raw': line.strip()
+        }
+    
+    # Fallback: return raw
+    return {
+        'timestamp': timestamp,
+        'client_ip': "unknown",
+        'domain': "unknown",
+        'raw': line.strip()
+    }
+
+def parse_and_display(data):
+    """Parse and display a log line for debugging."""
+    raw = data.get('raw', 'N/A')
+    parsed = parse_log_line(raw)
+    
+    print("=" * 60)
+    print(f"📄 RAW: {raw}")
+    print(f"🕐 Timestamp: {parsed['timestamp']}")
+    print(f"💻 Client IP: {parsed['client_ip']}")
+    print(f"🌐 Domain: {parsed['domain']}")
+    print(f"📦 Source: {data.get('source', 'N/A')}")
+    print(f"⏱️ Epoch: {data.get('timestamp_epoch', 'N/A')}")
+    print("=" * 60)
+    print()  # Simple line break between records
+
 def consume_logs():
     """Consume messages from Kafka and insert into PostgreSQL."""
-    # Kafka consumer configuration
     conf = {
         'bootstrap.servers': config.KAFKA_BOOTSTRAP,
         'group.id': 'logs-consumer-group',
@@ -62,12 +145,15 @@ def consume_logs():
     consumer = Consumer(conf)
     consumer.subscribe([config.PIHOLE_LOG_TOPIC])
     
-    conn = connect_db()
-    print(f"✅ Connected to PostgreSQL. Consuming topic: {config.PIHOLE_LOG_TOPIC}")
+    if not TEST_MODE:
+        conn = connect_db()
+        print(f"✅ Connected to PostgreSQL. Consuming topic: {config.PIHOLE_LOG_TOPIC}")
+    else:
+        print(f"🧪 TEST MODE: Consuming topic: {config.PIHOLE_LOG_TOPIC}")
     
     try:
         while True:
-            msg = consumer.poll(1.0)  # 1 second timeout
+            msg = consumer.poll(1.0)
             if msg is None:
                 continue
             if msg.error():
@@ -75,12 +161,22 @@ def consume_logs():
                 continue
             
             data = json.loads(msg.value().decode('utf-8'))
-            insert_log(conn, data)
-            print(f"📥 Inserted: {data.get('domain', 'unknown')}")
+            
+            if TEST_MODE:
+                parse_and_display(data)
+            else:
+                # Parse the raw line before inserting
+                parsed = parse_log_line(data.get('raw', ''))
+                # Update data with parsed values
+                data['client_ip'] = parsed['client_ip']
+                data['domain'] = parsed['domain']
+                insert_log(conn, data)
+                print(f"📥 Inserted: {parsed['domain']}")
     except KeyboardInterrupt:
         print("\n🛑 Consumer interrupted.")
     finally:
-        conn.close()
+        if not TEST_MODE:
+            conn.close()
         consumer.close()
 
 if __name__ == '__main__':
