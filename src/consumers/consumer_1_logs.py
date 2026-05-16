@@ -6,6 +6,7 @@ from datetime import datetime
 from confluent_kafka import Consumer
 from config import config
 
+
 # --- Test mode ---
 TEST_MODE = "--test" in sys.argv
 if TEST_MODE:
@@ -18,6 +19,7 @@ PG_PORT = config.POSTGRES_PORT
 PG_DB = config.POSTGRES_DB
 PG_USER = config.POSTGRES_USER
 PG_PASSWORD = config.POSTGRES_PASSWORD
+
 
 def connect_db():
     """Connect to PostgreSQL and return the connection."""

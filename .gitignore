@@ -5,6 +5,8 @@ __pycache__/
 .venv/
 venv/
 env/
+project_structure_generator.py
+PROJECT_STRUCTURE.md
 
 # Environment
 .env
