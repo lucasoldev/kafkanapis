@@ -68,12 +68,10 @@ def parse_log_line(line):
     
     # Pattern 1: "cached" or "cached-stale" - e.g. "cached-stale api.docker.com is 2600:..."
     if "cached" in line:
-        # Domain is usually at position 4, IP at position 6
         if len(parts) > 4:
             domain = parts[4]
             if len(parts) > 6:
                 ip = parts[6]
-                # Check if it looks like an IP address (IPv4 or IPv6)
                 if re.match(r'^(\d{1,3}\.){3}\d{1,3}$', ip) or ':' in ip:
                     client_ip = ip
         return {
@@ -85,11 +83,9 @@ def parse_log_line(line):
     
     # Pattern 2: "from" - e.g. "query[A] google.com from 192.168.1.50"
     if "from" in line:
-        # Find "from" and extract IP and domain
         from_index = parts.index('from')
         if from_index > 0 and from_index + 1 < len(parts):
             client_ip = parts[from_index + 1]
-            # Domain is usually before "from"
             if from_index > 2:
                 domain = parts[from_index - 1]
         return {
@@ -101,7 +97,6 @@ def parse_log_line(line):
     
     # Pattern 3: "gravity" - e.g. "gravity blocked sessions.bugsnag.com is 0.0.0.0"
     if "gravity" in line:
-        # Domain is usually at position 3
         if len(parts) > 3:
             domain = parts[3]
         return {
@@ -120,7 +115,7 @@ def parse_log_line(line):
     }
 
 def parse_and_display(data):
-    """Parse and display a log line for debugging."""
+    """Parse and display a log line for debugging (TEST MODE)."""
     raw = data.get('raw', 'N/A')
     parsed = parse_log_line(raw)
     
@@ -133,6 +128,14 @@ def parse_and_display(data):
     print(f"⏱️ Epoch: {data.get('timestamp_epoch', 'N/A')}")
     print("=" * 60)
     print()  # Simple line break between records
+
+def display_log(data):
+    """Display a log line in production mode (cleaner output)."""
+    raw = data.get('raw', 'N/A')
+    parsed = parse_log_line(raw)
+    
+    print(f"🕐 {parsed['timestamp']} | 💻 {parsed['client_ip']} | 🌐 {parsed['domain']}")
+    print()  # Single line break between records
 
 def consume_logs():
     """Consume messages from Kafka and insert into PostgreSQL."""
@@ -171,7 +174,7 @@ def consume_logs():
                 data['client_ip'] = parsed['client_ip']
                 data['domain'] = parsed['domain']
                 insert_log(conn, data)
-                print(f"📥 Inserted: {parsed['domain']}")
+                display_log(data)
     except KeyboardInterrupt:
         print("\n🛑 Consumer interrupted.")
     finally:
