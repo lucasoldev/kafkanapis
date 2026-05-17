@@ -8,13 +8,10 @@ flowchart TD
         direction TB
         subgraph PiHole [Pi-hole Server]
             P1[Local File /var/log/pihole.log]
-            P2[API Endpoints /api/logs/dnsmasq /devices /top_clients /upstreams /ftl /system /queries]
         end
 
         subgraph ProducerService [Producer (Systemd Service)]
             PF1[Pi-hole File Monitor]
-            PP1[Pi-hole API Logs Poller]
-            PP2[Pi-hole Data Poller]
         end
     end
 
@@ -34,6 +31,8 @@ flowchart TD
             subgraph Producers [Other Producers]
                 PF2[Public API Fetcher]
                 PF3[Random API Fetcher]
+                PP1[Pi-hole API Logs Poller]
+                PP2[Pi-hole Data Poller]
             end
         end
 
@@ -50,14 +49,11 @@ flowchart TD
     API1 --> PF2
     PF2 --> K1
     PF3 --> K1
+    PP1 --> K1
+    PP2 --> K1
     
     P1 --> PF1
     PF1 -->|Local Network| K1
-    
-    P2 --> PP1
-    PP1 --> K1
-    P2 --> PP2
-    PP2 --> K1
     
     S1 --> PF3
 
