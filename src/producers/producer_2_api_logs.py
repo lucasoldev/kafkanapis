@@ -23,6 +23,19 @@ if not TEST_MODE:
 else:
     producer = None
 
+# ============================================================
+# DISPLAY OPTION
+# ============================================================
+SHOW_SENT_MESSAGES = True  # Set to False to disable
+
+def delivery_report(err, msg):
+    """Callback to confirm message delivery."""
+    if err is not None:
+        print(f"❌ Message delivery failed: {err}")
+    else:
+        if SHOW_SENT_MESSAGES:
+            print(f"✅ Message delivered to {msg.topic()} [{msg.partition()}]")
+
 def get_sid():
     if not PASSWORD:
         print("❌ Password not defined in config.")
@@ -73,7 +86,6 @@ def produce_logs():
         ("/logs/webserver", "pi-hole.logs.api.webserver")
     ]
     
-    # “Dictionary to store the next ID for each endpoint”
     next_ids = {endpoint: 0 for endpoint, _ in endpoints}
     
     try:
@@ -82,22 +94,28 @@ def produce_logs():
                 data = get_logs(endpoint, sid, next_ids[endpoint])
                 if data and "log" in data and data["log"]:
                     for entry in data["log"]:
-                        producer.produce(
-                            topic,
-                            key=str(entry.get("timestamp")),
-                            value=json.dumps(entry)
-                        )
-                        producer.poll(0)
+                        if SHOW_SENT_MESSAGES:
+                            print(f"\n📤 Sending to {topic}:")
+                            print(json.dumps(entry, indent=2))
+                        if not TEST_MODE and producer:
+                            producer.produce(
+                                topic,
+                                key=str(entry.get("timestamp")),
+                                value=json.dumps(entry),
+                                callback=delivery_report
+                            )
+                            producer.poll(0)
                     next_ids[endpoint] = data.get("nextID", next_ids[endpoint] + 1)
-                    print(f"📨 Sent {len(data['log'])} messages to {topic}")
                 else:
-                    print(f"⏳ No new logs for {endpoint}. Waiting...")
+                    if SHOW_SENT_MESSAGES:
+                        print(f"⏳ No new logs for {endpoint}. Waiting...")
             time.sleep(5)
     except KeyboardInterrupt:
         print("\n🛑 Producer interrupted by user.")
     finally:
-        producer.flush()
-        print("✅ Producer flushed and closed.")
+        if not TEST_MODE and producer:
+            producer.flush()
+            print("✅ Producer flushed and closed.")
 
 if __name__ == "__main__":
     try:

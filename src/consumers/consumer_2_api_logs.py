@@ -107,7 +107,7 @@ def main():
             # Sleep to control processing speed
             # Adjust the value as needed
             # ========================================================
-            time.sleep(0.1)  # Small delay to avoid overloading
+            #time.sleep(0.1)  # Small delay to avoid overloading
             
     except KeyboardInterrupt:
         print("\n🛑 Consumer interrupted by user.")
