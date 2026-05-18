@@ -27,6 +27,8 @@ rodar o consumer no pc local
 python -m src.consumers.consumer_1_logs --test
 python -m src.consumers.consumer_1_logs
 
+Kafka UI:
+http://localhost:8080/
 
 verificar se kafka está usando o kraft:
 docker exec -it kafka bash -c "ls /opt/kafka/bin | grep kraft"

@@ -8,6 +8,7 @@ flowchart TD
         direction TB
         subgraph PiHole [Pi-hole Server]
             P1[Local File /var/log/pihole.log]
+            P2[API Endpoints /api/logs/dnsmasq /api/stats/summary /api/stats/top_domains /api/dns/blocking /api/info/ftl /api/info/system /api/network/gateway]
         end
 
         subgraph ProducerService [Producer (Systemd Service)]
@@ -17,6 +18,19 @@ flowchart TD
 
     subgraph WindowsPC [🖥️ Your Windows PC]
         direction TB
+        subgraph Docker [🐳 Docker Services]
+            direction TB
+            subgraph KafkaCluster [📦 Kafka & Zookeeper]
+                K1[Kafka Broker <br/>localhost:9092]
+            end
+            subgraph KafkaUI [🖥️ Kafka UI]
+                UI1[Kafka UI <br/>localhost:8080]
+            end
+            subgraph PostgreSQL [🗄️ PostgreSQL]
+                DB1[PostgreSQL <br/>localhost:5432]
+            end
+        end
+
         subgraph PythonApp [🐍 Python Application]
             direction TB
             subgraph Consumers [Consumers]
@@ -35,20 +49,14 @@ flowchart TD
                 PP2[Pi-hole Data Poller]
             end
         end
-
-        subgraph Kafka [📦 Kafka Cluster (Docker)]
-            K1[Broker 1<br/>Your-PC-IP:9092]
-        end
-
-        subgraph Database [🗄️ PostgreSQL]
-            DB1[Database]
-        end
     end
 
     %% Connections
     API1 --> PF2
     PF2 --> K1
     PF3 --> K1
+    PP1 -->|HTTP| P2
+    PP2 -->|HTTP| P2
     PP1 --> K1
     PP2 --> K1
     
@@ -71,8 +79,10 @@ flowchart TD
     classDef pihole fill:#fff3e0,stroke:#e65100,stroke-width:2px
     classDef producer fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
     classDef windows fill:#fff8e1,stroke:#bf360c,stroke-width:2px
-    classDef python fill:#e0f2f1,stroke:#004d40,stroke-width:2px
+    classDef docker fill:#e0f2f1,stroke:#004d40,stroke-width:2px
+    classDef python fill:#e1f5fe,stroke:#01579b,stroke-width:2px
     classDef kafka fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef kafkaui fill:#fff8e1,stroke:#e65100,stroke-width:2px
     classDef db fill:#e8eaf6,stroke:#1a237e,stroke-width:2px
 
     class Internet internet
@@ -80,6 +90,8 @@ flowchart TD
     class PiHole pihole
     class ProducerService producer
     class WindowsPC windows
+    class Docker docker
+    class KafkaCluster kafka
+    class KafkaUI kafkaui
+    class PostgreSQL db
     class PythonApp python
-    class Kafka kafka
-    class Database db

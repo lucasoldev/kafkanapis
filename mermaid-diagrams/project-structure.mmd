@@ -72,6 +72,10 @@ graph TD
         AJ[start_producers.sh]
     end
 
+    subgraph "docker/ (Windows)"
+        AK[kafka-ui]
+    end
+
     %% Connections
     A --> G
     B --> G
@@ -117,6 +121,9 @@ graph TD
     N --> AI
     N --> AJ
 
+    %% Docker relationship
+    A --> AK
+
     %% Raspberry Pi relationship
     RP1 -.-> RP2
     RP2 -.-> RP3
@@ -134,6 +141,7 @@ graph TD
     classDef utils fill:#e0f2f1,stroke:#004d40,stroke-width:2px
     classDef tests fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     classDef scripts fill:#e8eaf6,stroke:#1a237e,stroke-width:2px
+    classDef docker fill:#e1f5fe,stroke:#01579b,stroke-width:2px
 
     class A,B,C,D,E,F root
     class RP1,RP2,RP3,RP4,RP5 rpi
@@ -145,3 +153,4 @@ graph TD
     class AB,AC,AD utils
     class AE,AF,AG tests
     class AH,AI,AJ scripts
+    class AK docker

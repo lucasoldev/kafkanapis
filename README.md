@@ -55,10 +55,11 @@ From there, **three independent consumers** subscribe to these topics and proces
 | 🟣 Light Purple | 🖥️ Raspberry Pi | Raspberry Pi running the producer service |
 | 🟡 Light Orange | Pi-hole Server | Pi-hole server with local logs and API |
 | 🟢 Light Green | Producer Service | Systemd service running the Pi-hole log producer |
-| 🟡 Light Yellow | 🖥️ Your Windows PC | Your local computer (Kafka, consumers, other services) |
-| 🟢 Teal | 🐍 Python Application | Python code with consumers and services |
-| 🟠 Orange | 📦 Kafka Cluster | Kafka cluster running in Docker |
+| 🟡 Light Yellow | 🖥️ Your Windows PC | Your local computer |
+| 🟢 Teal | 🐍 Python Application | Python code with consumers, producers and services |
+| 🟠 Orange | 📦 Kafka Cluster (KRaft) | Kafka cluster running in Docker (no Zookeeper) |
 | 🔵 Dark Blue | 🗄️ PostgreSQL | Database for persistence |
+| 🟢 Light Green | 🖥️ Kafka UI | Kafka UI for visual monitoring and management |
 
 ---
 
