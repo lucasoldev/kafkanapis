@@ -2,7 +2,7 @@ import json
 from confluent_kafka import Consumer
 from config import config
 
-# Configurações
+# Settings
 KAFKA_BOOTSTRAP = config.KAFKA_BOOTSTRAP
 TOPIC = "pi-hole.logs.api.dnsmasq"
 
@@ -16,8 +16,8 @@ def main():
     consumer = Consumer(conf)
     consumer.subscribe([TOPIC])
 
-    print(f"🟢 Consumidor iniciado. Ouvindo tópico: {TOPIC}")
-    print("Pressione Ctrl+C para parar.\n")
+    print(f"🟢 Consumer started. Listening to topic: {TOPIC}")
+    print("Press Ctrl+C to stop.\n")
 
     try:
         while True:
@@ -25,16 +25,16 @@ def main():
             if msg is None:
                 continue
             if msg.error():
-                print(f"⚠️ Erro: {msg.error()}")
+                print(f"⚠️ Error: {msg.error()}")
                 continue
 
             data = json.loads(msg.value().decode('utf-8'))
-            print(f"📥 Mensagem recebida: {data}")
+            print(f"📥 Received message: {data}")
     except KeyboardInterrupt:
-        print("\n🛑 Consumidor interrompido pelo usuário.")
+        print("\n🛑 Consumer interrupted by user.")
     finally:
         consumer.close()
-        print("✅ Consumidor fechado.")
+        print("✅ Consumer closed.")
 
 if __name__ == "__main__":
     main()

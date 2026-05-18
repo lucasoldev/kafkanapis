@@ -1,3 +1,4 @@
+import sys
 import requests
 import json
 import time
@@ -5,26 +6,24 @@ from urllib3.exceptions import InsecureRequestWarning
 from confluent_kafka import Producer
 from config import config
 
-# Desabilita avisos de SSL (para certificado autoassinado)
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-# Configurações
 PIHOLE_URL = config.PIHOLE_BASE_URL.rstrip('/')
 PASSWORD = config.PIHOLE_ADM_PWD
 KAFKA_BOOTSTRAP = config.KAFKA_BOOTSTRAP
 
-# Conecta ao Kafka
-producer = Producer({'bootstrap.servers': KAFKA_BOOTSTRAP})
+TEST_MODE = "--test" in sys.argv
 
-def delivery_report(err, msg):
-    """Callback para confirmar entrega da mensagem."""
-    if err is not None:
-        print(f"❌ Message delivery failed: {err}")
-    else:
-        print(f"✅ Message delivered to {msg.topic()} [{msg.partition()}]")
+if TEST_MODE:
+    print("🧪 Running in TEST MODE - no messages will be sent to Kafka")
+    print("=" * 60)
+
+if not TEST_MODE:
+    producer = Producer({'bootstrap.servers': KAFKA_BOOTSTRAP})
+else:
+    producer = None
 
 def get_sid():
-    """Authenticate with the Pi-hole API and return the SID."""
     if not PASSWORD:
         print("❌ Password not defined in config.")
         return None
@@ -50,7 +49,6 @@ def get_sid():
     return None
 
 def get_logs(endpoint, sid, nextID=None):
-    """Fetch logs from a Pi-hole endpoint with optional nextID."""
     url = f"{PIHOLE_URL}{endpoint}"
     params = {"sid": sid}
     if nextID is not None:
@@ -65,19 +63,16 @@ def get_logs(endpoint, sid, nextID=None):
         return None
 
 def produce_logs():
-    """Main loop: fetch logs from API and send to Kafka."""
     sid = get_sid()
     if not sid:
         return
     
-    # Endpoints de log e seus tópicos correspondentes
     endpoints = [
         ("/logs/dnsmasq", "pi-hole.logs.api.dnsmasq"),
         ("/logs/ftl", "pi-hole.logs.api.ftl"),
         ("/logs/webserver", "pi-hole.logs.api.webserver")
     ]
     
-    # Para cada endpoint, faz o polling
     try:
         for endpoint, topic in endpoints:
             print(f"\n📡 Polling {endpoint} -> {topic}")
@@ -85,24 +80,26 @@ def produce_logs():
             while True:
                 data = get_logs(endpoint, sid, next_id)
                 if data and "log" in data and data["log"]:
-                    for entry in data["log"]:
-                        producer.produce(
-                            topic,
-                            key=str(entry.get("timestamp")),
-                            value=json.dumps(entry),
-                            callback=delivery_report
-                        )
-                        producer.poll(0)
-                    next_id = data.get("nextID", next_id + 1)
-                    print(f"📨 Sent {len(data['log'])} messages to {topic}")
+                    if TEST_MODE:
+                        print(f"\n🧪 [TEST] {len(data['log'])} messages would be sent to {topic}")
+                        for entry in data["log"][:1]:
+                            print(f"    🕐 {entry.get('timestamp')}")
+                            print(f"    📝 {entry.get('message')}")
+                    else:
+                        for entry in data["log"]:
+                            producer.produce(topic, key=str(entry.get("timestamp")), value=json.dumps(entry))
+                            producer.poll(0)
+                        next_id = data.get("nextID", next_id + 1)
+                        print(f"📨 Sent {len(data['log'])} messages to {topic}")
                 else:
                     print(f"⏳ No new logs for {endpoint}. Waiting...")
                 time.sleep(5)
     except KeyboardInterrupt:
         print("\n🛑 Producer interrupted by user.")
     finally:
-        producer.flush()
-        print("✅ Producer flushed and closed.")
+        if not TEST_MODE and producer:
+            producer.flush()
+            print("✅ Producer flushed and closed.")
 
 if __name__ == "__main__":
     try:
