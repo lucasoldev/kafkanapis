@@ -80,7 +80,7 @@ kafka-n-apis/
 │   ├── project-structure.mmd
 │   ├── project_structure.png
 │   └── workflow.png
-├── raspberry-files/          # Just to represent the files on the raspberry
+├── raspberry-files/
 │   ├── .env
 │   ├── config.py
 │   ├── producer.py
@@ -98,18 +98,29 @@ kafka-n-apis/
     └── test_pihole_log_reader.py
 ```
 
-### 🗂️ Raspberry Pi Directory
+### 🗂️ Raspberry Pi Directory (Representation)
+
+> ⚠️ **Note:** This directory in the repository is a **representation** of how the files should be organized on the Raspberry Pi. It is **not meant to be copied directly** to the Raspberry Pi — it serves as a reference for the expected structure.
+
+```
+raspberry-files/
+├── .env
+├── config.py
+├── producer.py
+└── requirements.txt
+```
+
+**On the actual Raspberry Pi, the files should be located at:**
 
 ```
 /home/pi/kafka-pihole-producer/
-├── .env                                  # Environment variables
-├── config.py                             # Configuration loader
-├── producer.py                           # Pi-hole log producer script
-├── venv/                                 # Python virtual environment
-└── /etc/systemd/system/kafka-pihole-producer.service  # Systemd service file
+├── .env
+├── config.py
+├── producer.py
+├── venv/
+└── /etc/systemd/system/kafka-pihole-producer.service
 ```
 
----
 
 ### 📄 **Main Files Breakdown**
 
