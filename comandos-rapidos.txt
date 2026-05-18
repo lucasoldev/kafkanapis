@@ -23,9 +23,12 @@ executar o leitor do consumer no docker:
 docker exec -it kafka bash
 /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic pi-hole.logs.file --from-beginning
 
-rodar o consumer no pc local
+rodar o consumer 1 no pc local
 python -m src.consumers.consumer_1_logs --test
 python -m src.consumers.consumer_1_logs
+
+rodar o producer 2 no pc local
+python -m src.producers.producer_2_api_logs
 
 Kafka UI:
 http://localhost:8080/
