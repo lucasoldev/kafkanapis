@@ -185,4 +185,9 @@ def consume_logs():
         consumer.close()
 
 if __name__ == '__main__':
-    consume_logs()
+    try:
+        consume_logs()
+    except KeyboardInterrupt:
+        print("\n🛑 Consumer stopped by user.")
+    except Exception as e:
+        print(f"\n❌ Unexpected error: {e}")
