@@ -406,8 +406,22 @@ python -m src.consumers.consumer_3_external
 
 Thanks for stopping by. I hope this project gave you a little spark.
 
-Questions? Ideas? Want to share something cool?  
-Just open an issue or say hello.
+---
+
+### ⭐️ If you liked it
+
+If you found this project helpful or interesting, please consider giving it a **star** on GitHub.  
+It’s a simple gesture that means a lot and helps others discover it.
+
+---
+
+### 📬 Let's connect
+
+- **Questions?** – Open an issue
+- **Ideas?** – Start a discussion
+- **Want to share what you built?** – Tag me or send a message
+
+---
 
 **Go build something awesome.** 🚀
 
