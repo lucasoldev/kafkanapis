@@ -73,33 +73,31 @@ def produce_logs():
         ("/logs/webserver", "pi-hole.logs.api.webserver")
     ]
     
+    # “Dictionary to store the next ID for each endpoint”
+    next_ids = {endpoint: 0 for endpoint, _ in endpoints}
+    
     try:
-        for endpoint, topic in endpoints:
-            print(f"\n📡 Polling {endpoint} -> {topic}")
-            next_id = 0
-            while True:
-                data = get_logs(endpoint, sid, next_id)
+        while True:
+            for endpoint, topic in endpoints:
+                data = get_logs(endpoint, sid, next_ids[endpoint])
                 if data and "log" in data and data["log"]:
-                    if TEST_MODE:
-                        print(f"\n🧪 [TEST] {len(data['log'])} messages would be sent to {topic}")
-                        for entry in data["log"][:1]:
-                            print(f"    🕐 {entry.get('timestamp')}")
-                            print(f"    📝 {entry.get('message')}")
-                    else:
-                        for entry in data["log"]:
-                            producer.produce(topic, key=str(entry.get("timestamp")), value=json.dumps(entry))
-                            producer.poll(0)
-                        next_id = data.get("nextID", next_id + 1)
-                        print(f"📨 Sent {len(data['log'])} messages to {topic}")
+                    for entry in data["log"]:
+                        producer.produce(
+                            topic,
+                            key=str(entry.get("timestamp")),
+                            value=json.dumps(entry)
+                        )
+                        producer.poll(0)
+                    next_ids[endpoint] = data.get("nextID", next_ids[endpoint] + 1)
+                    print(f"📨 Sent {len(data['log'])} messages to {topic}")
                 else:
                     print(f"⏳ No new logs for {endpoint}. Waiting...")
-                time.sleep(5)
+            time.sleep(5)
     except KeyboardInterrupt:
         print("\n🛑 Producer interrupted by user.")
     finally:
-        if not TEST_MODE and producer:
-            producer.flush()
-            print("✅ Producer flushed and closed.")
+        producer.flush()
+        print("✅ Producer flushed and closed.")
 
 if __name__ == "__main__":
     try:
