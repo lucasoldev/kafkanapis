@@ -1,0 +1,32 @@
+reduzir prompt:
+Function Prompt { "$( (Get-Location | Split-Path -Leaf) )> " }
+
+parar postgres local (como admin):
+Stop-Service -Name postgresql-x64-18 -Force
+
+rodar arquivo simples que testa logs locais:
+python -m tests.test_pihole_log_reader
+python -m tests.test_pihole_log_api
+
+log do pihole:
+/var/log/pihole/pihole.log
+
+ver logs do serviço produtor:
+sudo journalctl -u kafka-pihole-producer -f
+
+docker start kafka
+
+docker-compose down
+docker-compose up -d
+
+executar o leitor do consumer no docker:
+docker exec -it kafka bash
+/opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic pi-hole.logs.file --from-beginning
+
+rodar o consumer no pc local
+python -m src.consumers.consumer_1_logs --test
+python -m src.consumers.consumer_1_logs
+
+
+verificar se kafka está usando o kraft:
+docker exec -it kafka bash -c "ls /opt/kafka/bin | grep kraft"
