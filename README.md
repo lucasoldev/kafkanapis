@@ -71,76 +71,34 @@ From there, **three independent consumers** subscribe to these topics and proces
 
 ```
 kafka-n-apis/
-├── docker-compose.yml                    # Kafka + Zookeeper
-├── .env.example                          # Environment template
-├── requirements.txt                      # Python dependencies
-├── README.md                             # Project documentation
-├── .gitignore                            # Files ignored by Git
-├── Makefile                              # Useful commands (optional)
-│
-├── src/                                  # Main source code (Windows)
+├── .env
+├── config.py
+├── docker-compose.yml
+├── mermaid-diagrams/
+│   ├── architecture-code.mmd
+│   ├── architecture.png
+│   ├── project-structure.mmd
+│   ├── project_structure.png
+│   └── workflow.png
+├── raspberry-files/          # Just to represent the files on the raspberry
+│   ├── .env
+│   ├── config.py
+│   ├── producer.py
+│   └── requirements.txt
+├── README.md
+├── requirements.txt
+├── src/
 │   ├── __init__.py
-│   │
-│   ├── producers/                        # Producers (send data to Kafka)
-│   │   ├── __init__.py
-│   │   ├── base_producer.py              # Base class for producers
-│   │   ├── pi_hole_api_logs_poller.py    # Fetching /api/logs/dnsmasq → Kafka
-│   │   ├── pi_hole_data_poller.py        # Fetching /devices, /top_clients, /upstreams, etc.
-│   │   ├── public_api_fetcher.py         # Public APIs → Kafka
-│   │   └── random_api_fetcher.py         # Localhost random API → Kafka
-│   │
-│   ├── consumers/                        # Consumers (process data from Kafka)
-│   │   ├── __init__.py
-│   │   ├── base_consumer.py              # Base class for consumers
-│   │   ├── consumer_1_logs.py            # Processes DNS logs (file + API)
-│   │   ├── consumer_2_metrics.py         # Processes metrics (devices, clients, upstreams, etc.)
-│   │   └── consumer_3_external.py        # Processes external data (public APIs + random)
-│   │
-│   ├── services/                         # Auxiliary services
-│   │   ├── __init__.py
-│   │   ├── api_client.py                 # HTTP client for external APIs
-│   │   ├── random_api_server.py          # Flask server for random data
-│   │   └── kafka_client.py               # Kafka client (producer/consumer)
-│   │
-│   ├── models/                           # Data models (schemas)
-│   │   ├── __init__.py
-│   │   ├── pi_hole_log.py                # Schema for Pi-hole logs
-│   │   ├── pi_hole_metric.py             # Schema for Pi-hole metrics
-│   │   ├── public_api_data.py            # Schema for public API data
-│   │   └── random_data.py                # Schema for random data
-│   │
-│   ├── config/                           # Configuration
-│   │   ├── __init__.py
-│   │   ├── settings.py                   # Loads .env variables
-│   │   └── topics.py                     # Kafka topic definitions
-│   │
-│   ├── utils/                            # Utilities
-│   │   ├── __init__.py
-│   │   ├── logger.py                     # Logging configuration
-│   │   ├── file_watcher.py               # File monitoring (tail -f)
-│   │   └── timestamp.py                  # Timestamp manipulation
-│   │
-│   └── __main__.py                       # Entry point (optional)
-│
-├── tests/                                # Tests
-│   ├── __init__.py
-│   ├── test_producers.py                 # Producer tests
-│   ├── test_consumers.py                 # Consumer tests
-│   └── conftest.py                       # Test configuration
-│
-├── scripts/                              # Support scripts
-│   ├── create_topics.sh                  # Creates Kafka topics
-│   ├── delete_topics.sh                  # Removes Kafka topics
-│   └── start_producers.sh                # Starts all producers
-│
-├── data/                                 # Local data (optional)
-│   └── logs/                             # Project-generated logs
-│
-└── mermaid-diagrams/                     # Project Mermaid diagrams
+│   └── consumers/
+│       ├── __init__.py
+│       └── consumer_1_logs.py
+└── tests/
+    ├── __init__.py
+    ├── test_pihole_log_api.py
+    └── test_pihole_log_reader.py
+```
 
 ### 🗂️ Raspberry Pi Directory
-
-On your Raspberry Pi, the producer service is located at:
 
 ```
 /home/pi/kafka-pihole-producer/
@@ -153,9 +111,9 @@ On your Raspberry Pi, the producer service is located at:
 
 ---
 
-## 📄 **Main Files Breakdown**
+### 📄 **Main Files Breakdown**
 
-### **Producers (src/producers/ - Windows)**
+#### **Producers (src/producers/ - Windows)**
 
 | File | Description |
 |------|-------------|
@@ -165,7 +123,7 @@ On your Raspberry Pi, the producer service is located at:
 | `public_api_fetcher.py` | Makes requests to public APIs (ip-api, viacep, etc.) and sends to `public.api.data` |
 | `random_api_fetcher.py` | Queries `http://localhost:5000/random` and sends to `random.data.raw` |
 
-### **Consumers (src/consumers/ - Windows)**
+#### **Consumers (src/consumers/ - Windows)**
 
 | File | Description |
 |------|-------------|
@@ -174,7 +132,7 @@ On your Raspberry Pi, the producer service is located at:
 | `consumer_2_metrics.py` | Subscribes to topic `pi-hole.data.endpoints` and processes metrics (devices, top clients, upstreams, FTL, system, queries) |
 | `consumer_3_external.py` | Subscribes to topics `public.api.data` and `random.data.raw` and processes external data |
 
-### **Services (src/services/ - Windows)**
+#### **Services (src/services/ - Windows)**
 
 | File | Description |
 |------|-------------|
@@ -182,7 +140,7 @@ On your Raspberry Pi, the producer service is located at:
 | `random_api_server.py` | Flask server that generates random data at `/random` |
 | `kafka_client.py` | Encapsulates Kafka connection (production and consumption) |
 
-### **Models (src/models/ - Windows)**
+#### **Models (src/models/ - Windows)**
 
 | File | Description |
 |------|-------------|
@@ -191,14 +149,14 @@ On your Raspberry Pi, the producer service is located at:
 | `public_api_data.py` | Schema for public API data (geolocation, etc.) |
 | `random_data.py` | Schema for random data (id, value, category, timestamp) |
 
-### **Configuration (src/config/ - Windows)**
+#### **Configuration (src/config/ - Windows)**
 
 | File | Description |
 |------|-------------|
 | `settings.py` | Loads `.env` variables using `python-dotenv` |
 | `topics.py` | Defines constants with topic names |
 
-### **Utilities (src/utils/ - Windows)**
+#### **Utilities (src/utils/ - Windows)**
 
 | File | Description |
 |------|-------------|
@@ -206,7 +164,7 @@ On your Raspberry Pi, the producer service is located at:
 | `file_watcher.py` | Monitors files in real-time (tail -f) |
 | `timestamp.py` | Functions for timestamp manipulation (formatting, conversion) |
 
-### **Scripts (scripts/ - Windows)**
+#### **Scripts (scripts/ - Windows)**
 
 | File | Description |
 |------|-------------|
