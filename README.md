@@ -30,7 +30,7 @@
 | Source | Description |
 |--------|-------------|
 | **Pi-hole (local)** | Tails `/var/log/pihole/pihole.log` from a **systemd service on a Raspberry Pi** |
-| **Pi-hole (API logs)** | Polls `/api/logs/dnsmasq` |
+| **Pi-hole (API logs)** | Polls `/api/logs/dnsmasq`, `/logs/ftl`, `/logs/webserver` |
 | **Pi-hole (API)** | Fetches `/devices`, `/top_clients`, `/upstreams`, `/ftl`, `/system`, `/queries` |
 | **Public APIs** | External data from multiple free test APIs |
 | **Localhost Random API** | Synthetic data (people, companies, random text) via `Faker` + Flask |
