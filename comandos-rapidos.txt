@@ -29,6 +29,11 @@ python -m src.consumers.consumer_1_logs
 
 rodar o producer 2 no pc local
 python -m src.producers.producer_2_api_logs
+python -m src.producers.producer_2_api_logs --test
+
+rodar o consumer 2 no pc local
+python -m src.consumers.consumer_2_api_logs
+python -m src.consumers.consumer_2_api_logs --test
 
 Kafka UI:
 http://localhost:8080/

@@ -1,3 +1,4 @@
+from datetime import datetime
 import sys
 import json
 import psycopg2
@@ -36,19 +37,24 @@ def connect_db():
     )
     return conn
 
+from datetime import datetime
+
 def insert_log(conn, data, endpoint):
-    """Insert a log entry into the database."""
     if TEST_MODE:
         return
     cur = conn.cursor()
+    
+    # Converts the Unix timestamp to TIMESTAMP
+    timestamp = datetime.fromtimestamp(data.get('timestamp')).strftime('%Y-%m-%d %H:%M:%S')
+    
     cur.execute("""
         INSERT INTO api_logs (timestamp, message, prio, origin)
         VALUES (%s, %s, %s, %s)
     """, (
-        data.get('timestamp'),
+        timestamp,
         data.get('message'),
         data.get('prio'),
-        endpoint  # 'dnsmasq', 'ftl', 'webserver'
+        endpoint
     ))
     conn.commit()
     cur.close()
