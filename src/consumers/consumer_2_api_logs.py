@@ -19,7 +19,7 @@ SHOW_RECEIVED_MESSAGES = True  # Set to False to disable
 # PostgreSQL settings (API logs database)
 PG_HOST = 'localhost'
 PG_PORT = config.POSTGRES_PORT
-PG_DB = 'pihole_logs_api'  # <-- Novo banco
+PG_DB = config.PIHOLE_DB_API_LOGS  # <-- Usa a variável do config
 PG_USER = config.POSTGRES_USER
 PG_PASSWORD = config.POSTGRES_PASSWORD
 
@@ -36,22 +36,19 @@ def connect_db():
     )
     return conn
 
-def insert_log(conn, data, source, endpoint):
+def insert_log(conn, data, endpoint):
     """Insert a log entry into the database."""
     if TEST_MODE:
         return
     cur = conn.cursor()
     cur.execute("""
-        INSERT INTO dns_logs (timestamp, client_ip, domain, raw, source, endpoint, timestamp_epoch)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO api_logs (timestamp, message, prio, origin)
+        VALUES (%s, %s, %s, %s)
     """, (
         data.get('timestamp'),
-        data.get('client_ip'),
-        data.get('domain'),
-        data.get('raw'),
-        data.get('source'),
-        endpoint,  # <-- Novo campo
-        data.get('timestamp_epoch')
+        data.get('message'),
+        data.get('prio'),
+        endpoint  # 'dnsmasq', 'ftl', 'webserver'
     ))
     conn.commit()
     cur.close()
@@ -89,7 +86,7 @@ def main():
             
             data = json.loads(msg.value().decode('utf-8'))
             source = msg.topic()
-            endpoint = source.split('.')[-1]  # Extrai "dnsmasq", "ftl", "webserver"
+            endpoint = source.split('.')[-1]  # 'dnsmasq', 'ftl', 'webserver'
             
             # ========================================================
             # Optional display of received message
@@ -99,15 +96,17 @@ def main():
                 print(f"\n📥 Received from {source}:")
                 print(f"   Timestamp: {data.get('timestamp', 'N/A')}")
                 print(f"   Message: {data.get('message', 'N/A')}")
+                print(f"   Priority: {data.get('prio', 'N/A')}")
+                print(f"   Origin: {endpoint}")
             
             if not TEST_MODE:
-                insert_log(conn, data, source, endpoint)
+                insert_log(conn, data, endpoint)
             
             # ========================================================
             # Sleep to control processing speed
             # Adjust the value as needed
             # ========================================================
-            #time.sleep(0.1)  # Small delay to avoid overloading
+            time.sleep(0.1)  # Small delay to avoid overloading
             
     except KeyboardInterrupt:
         print("\n🛑 Consumer interrupted by user.")

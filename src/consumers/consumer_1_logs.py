@@ -6,7 +6,6 @@ from datetime import datetime
 from confluent_kafka import Consumer
 from config import config
 
-
 # --- Test mode ---
 TEST_MODE = "--test" in sys.argv
 if TEST_MODE:
@@ -16,10 +15,9 @@ if TEST_MODE:
 # PostgreSQL settings (from config)
 PG_HOST = 'localhost'
 PG_PORT = config.POSTGRES_PORT
-PG_DB = config.POSTGRES_DB
+PG_DB = config.PIHOLE_DB_LOCAL_LOGS  # <-- New local db
 PG_USER = config.POSTGRES_USER
 PG_PASSWORD = config.POSTGRES_PASSWORD
-
 
 def connect_db():
     """Connect to PostgreSQL and return the connection."""
@@ -148,13 +146,13 @@ def consume_logs():
     }
     
     consumer = Consumer(conf)
-    consumer.subscribe([config.PIHOLE_LOG_TOPIC])
+    consumer.subscribe([config.PIHOLE_LOCAL_LOG_TOPIC])  # <-- Novo tópico local
     
     if not TEST_MODE:
         conn = connect_db()
-        print(f"✅ Connected to PostgreSQL. Consuming topic: {config.PIHOLE_LOG_TOPIC}")
+        print(f"✅ Connected to PostgreSQL. Consuming topic: {config.PIHOLE_LOCAL_LOG_TOPIC}")
     else:
-        print(f"🧪 TEST MODE: Consuming topic: {config.PIHOLE_LOG_TOPIC}")
+        print(f"🧪 TEST MODE: Consuming topic: {config.PIHOLE_LOCAL_LOG_TOPIC}")
     
     try:
         while True:

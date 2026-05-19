@@ -22,12 +22,16 @@ class Config:
     
     # Kafka
     KAFKA_BOOTSTRAP = os.getenv('KAFKA_BOOTSTRAP')
-    PIHOLE_LOG_TOPIC = os.getenv('PIHOLE_LOG_TOPIC')
+    PIHOLE_LOCAL_LOG_TOPIC = os.getenv('PIHOLE_LOCAL_LOG_TOPIC')
+    PIHOLE_API_LOG_TOPIC = os.getenv('PIHOLE_API_LOG_TOPIC')
     
     # PostgreSQL
     POSTGRES_USER = os.getenv('POSTGRES_USER')
     POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD')
-    POSTGRES_DB = os.getenv('POSTGRES_DB')
     POSTGRES_PORT = int(os.getenv('POSTGRES_PORT', '5432'))
+    
+    # Database names
+    PIHOLE_DB_LOCAL_LOGS = os.getenv('PIHOLE_DB_LOCAL_LOGS', 'pihole_local_logs')
+    PIHOLE_DB_API_LOGS = os.getenv('PIHOLE_DB_API_LOGS', 'pihole_api_logs')
 
 config = Config()
