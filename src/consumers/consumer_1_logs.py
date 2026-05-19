@@ -39,7 +39,7 @@ def insert_log(conn, data):
     try:
         dt = datetime.strptime(raw_timestamp, '%b %d %H:%M:%S')
         dt = dt.replace(year=datetime.now().year)
-        timestamp = dt.strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = datetime.fromtimestamp(data.get('timestamp_epoch')).strftime('%Y-%m-%d %H:%M:%S')
     except:
         timestamp = None
     
