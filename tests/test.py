@@ -1,7 +1,6 @@
-import re
 import requests
 import json
-import paramiko
+from datetime import datetime
 from urllib3.exceptions import InsecureRequestWarning
 from config import config
 
@@ -32,62 +31,43 @@ def get_sid():
         print(f"❌ Authentication error: {e}")
         return None
 
-def get_raspberry_uptime():
-    try:
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(
-            hostname=config.RASPBERRY_SSH_HOST,
-            username=config.RASPBERRY_SSH_USER,
-            password=config.RASPBERRY_SSH_PASSWORD,
-            timeout=5
-        )
-        stdin, stdout, stderr = ssh.exec_command('uptime')
-        uptime_output = stdout.read().decode('utf-8').strip()
-        ssh.close()
-        uptime = re.search(r'up\s+(.*?),\s+', uptime_output).group(1).strip()
-        return uptime
-    except Exception as e:
-        return f"Error: {e}"
-
-def test_ftl():
+def test_queries():
     sid = get_sid()
     if not sid:
         return
     
-    url = f"{PIHOLE_URL}/api/info/ftl"
+    import time
+    now = time.time()
+    yesterday = now - 86400  # 24h
+    
+    url = f"{PIHOLE_URL}/api/queries"
     headers = {"X-FTL-SID": sid}
+    params = {
+        "from": int(yesterday),
+        "until": int(now),
+        "limit": 100
+    }
     
     try:
-        response = requests.get(url, headers=headers, verify=False)
+        response = requests.get(url, headers=headers, params=params, verify=False)
         response.raise_for_status()
         data = response.json()
-        ftl = data.get("ftl", {})
-        print(f"\n⚙️  FTL Status:\n")
-        print(f"    PID: {ftl.get('pid', 'N/A')}")
-        print(f"    System Uptime: {get_raspberry_uptime()}")
-        print(f"    CPU: {ftl.get('%cpu', 0):.2f}%")
-        print(f"    Memory: {ftl.get('%mem', 0):.2f}%")
-        print(f"    Database: {ftl.get('database', {}).get('gravity', 'N/A')} blocked domains")
+        queries = data.get("queries", [])
         
-        # Try to get FTL version from the same endpoint (if available)
-        version = ftl.get('version')
-        if version:
-            print(f"    Version: {version}")
-        else:
-            # If not available, fetch from /info/version
-            try:
-                url_version = f"{PIHOLE_URL}/api/info/version"
-                response_version = requests.get(url_version, headers=headers, verify=False)
-                response_version.raise_for_status()
-                data_version = response_version.json()
-                version_info = data_version.get("version", {})
-                ftl_version = version_info.get("ftl", {}).get("local", {}).get("version", "N/A")
-                print(f"    Version: {ftl_version}")
-            except Exception:
-                print(f"    Version: N/A")
+        # Remove duplicatas por domínio
+        unique_queries = {}
+        for q in queries:
+            domain = q.get('domain', 'N/A')
+            if domain not in unique_queries:
+                unique_queries[domain] = q
+        
+        print(f"\n📈 Queries (last 24h, unique domains):")
+        for i, (domain, q) in enumerate(unique_queries.items()):
+            time_unix = q.get('time', 0)
+            dt = datetime.fromtimestamp(time_unix)
+            print(f"    {i+1}. {dt.strftime('%Y-%m-%d %H:%M:%S')} - {domain}")
     except Exception as e:
         print(f"❌ Error: {e}")
 
 if __name__ == "__main__":
-    test_ftl()
+    test_queries()
