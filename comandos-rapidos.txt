@@ -4,6 +4,9 @@ Function Prompt { "$( (Get-Location | Split-Path -Leaf) )> " }
 parar postgres local (como admin):
 Stop-Service -Name postgresql-x64-18 -Force
 
+entrar no postgres pelo docker:
+docker exec -it postgres psql -U postgres
+
 rodar arquivo simples que testa logs locais:
 python -m tests.test_pihole_log_reader
 python -m tests.test_pihole_log_api
