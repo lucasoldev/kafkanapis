@@ -24,6 +24,13 @@ class Config:
     KAFKA_BOOTSTRAP = os.getenv('KAFKA_BOOTSTRAP')
     PIHOLE_LOCAL_LOG_TOPIC = os.getenv('PIHOLE_LOCAL_LOG_TOPIC')
     PIHOLE_API_LOG_TOPIC = os.getenv('PIHOLE_API_LOG_TOPIC')
+
+    # Pi-hole API Ideas Topics
+    PIHOLE_IDEAS_TOPIC_NETWORK_DEVICES = os.getenv('PIHOLE_IDEAS_TOPIC_NETWORK_DEVICES')
+    PIHOLE_IDEAS_TOPIC_TOP_CLIENTS = os.getenv('PIHOLE_IDEAS_TOPIC_TOP_CLIENTS')
+    PIHOLE_IDEAS_TOPIC_UPSTREAMS = os.getenv('PIHOLE_IDEAS_TOPIC_UPSTREAMS')
+    PIHOLE_IDEAS_TOPIC_FTL_STATUS = os.getenv('PIHOLE_IDEAS_TOPIC_FTL_STATUS')
+    PIHOLE_IDEAS_TOPIC_QUERIES = os.getenv('PIHOLE_IDEAS_TOPIC_QUERIES')
     
     # PostgreSQL
     POSTGRES_USER = os.getenv('POSTGRES_USER')
@@ -33,5 +40,6 @@ class Config:
     # Database names
     PIHOLE_DB_LOCAL_LOGS = os.getenv('PIHOLE_DB_LOCAL_LOGS', 'pihole_local_logs')
     PIHOLE_DB_API_LOGS = os.getenv('PIHOLE_DB_API_LOGS', 'pihole_api_logs')
+    PIHOLE_DB_API_IDEAS = os.getenv('PIHOLE_DB_API_IDEAS', 'pihole_api_ideas')
 
 config = Config()

@@ -115,6 +115,9 @@ def produce_api_ideas():
         data = request("/network/devices")
         if data:
             devices = data.get("devices", [])
+            payload = {
+                "total_devices": len(devices)
+            }
             if SHOW_SENT_MESSAGES:
                 print(f"\n📡 Sending to {topics['network_devices']}:")
                 print(f"   Total devices: {len(devices)}")
@@ -122,7 +125,7 @@ def produce_api_ideas():
                 producer.produce(
                     topics['network_devices'],
                     key="network_devices",
-                    value=json.dumps(data),
+                    value=json.dumps(payload),
                     callback=delivery_report
                 )
                 producer.flush()
@@ -131,6 +134,12 @@ def produce_api_ideas():
         data = request("/stats/top_clients", {"count": 5})
         if data:
             clients = data.get("clients", [])
+            payload = {
+                "clients": [
+                    {"ip": c.get("ip"), "count": c.get("count")}
+                    for c in clients
+                ]
+            }
             if SHOW_SENT_MESSAGES:
                 print(f"\n📡 Sending to {topics['top_clients']}:")
                 for i, client in enumerate(clients):
@@ -139,7 +148,7 @@ def produce_api_ideas():
                 producer.produce(
                     topics['top_clients'],
                     key="top_clients",
-                    value=json.dumps(data),
+                    value=json.dumps(payload),
                     callback=delivery_report
                 )
                 producer.flush()
@@ -148,6 +157,17 @@ def produce_api_ideas():
         data = request("/stats/upstreams")
         if data:
             upstreams = data.get("upstreams", [])
+            payload = {
+                "upstreams": [
+                    {
+                        "name": u.get("name"),
+                        "ip": u.get("ip"),
+                        "avg_response": u.get("statistics", {}).get("response", 0),
+                        "count": u.get("count", 0)
+                    }
+                    for u in upstreams
+                ]
+            }
             if SHOW_SENT_MESSAGES:
                 print(f"\n📡 Sending to {topics['upstreams']}:")
                 for upstream in upstreams:
@@ -161,7 +181,7 @@ def produce_api_ideas():
                 producer.produce(
                     topics['upstreams'],
                     key="upstreams",
-                    value=json.dumps(data),
+                    value=json.dumps(payload),
                     callback=delivery_report
                 )
                 producer.flush()
@@ -170,18 +190,26 @@ def produce_api_ideas():
         data = request("/info/ftl")
         if data:
             ftl = data.get("ftl", {})
+            db_info = ftl.get("database", {})
+            payload = {
+                "pid": ftl.get("pid"),
+                "system_uptime": get_raspberry_uptime(),
+                "cpu_percent": ftl.get("%cpu", 0),
+                "memory_percent": ftl.get("%mem", 0),
+                "blocked_domains": db_info.get("gravity", 0)
+            }
             if SHOW_SENT_MESSAGES:
                 print(f"\n📡 Sending to {topics['ftl_status']}:")
                 print(f"   PID: {ftl.get('pid', 'N/A')}")
                 print(f"   System Uptime: {get_raspberry_uptime()}")
                 print(f"   CPU: {ftl.get('%cpu', 0):.2f}%")
                 print(f"   Memory: {ftl.get('%mem', 0):.2f}%")
-                print(f"   Database: {ftl.get('database', {}).get('gravity', 'N/A')} blocked domains")
+                print(f"   Database: {db_info.get('gravity', 'N/A')} blocked domains")
             if not TEST_MODE and producer:
                 producer.produce(
                     topics['ftl_status'],
                     key="ftl_status",
-                    value=json.dumps(data),
+                    value=json.dumps(payload),
                     callback=delivery_report
                 )
                 producer.flush()
@@ -202,6 +230,15 @@ def produce_api_ideas():
                 domain = q.get('domain', 'N/A')
                 if domain not in unique_queries:
                     unique_queries[domain] = q
+            payload = {
+                "queries": [
+                    {
+                        "domain": domain,
+                        "time": datetime.fromtimestamp(q.get("time", 0)).strftime('%Y-%m-%d %H:%M:%S')
+                    }
+                    for domain, q in unique_queries.items()
+                ]
+            }
             if SHOW_SENT_MESSAGES:
                 print(f"\n📡 Sending to {topics['queries']}:")
                 for i, (domain, q) in enumerate(unique_queries.items()):
@@ -212,7 +249,7 @@ def produce_api_ideas():
                 producer.produce(
                     topics['queries'],
                     key="queries",
-                    value=json.dumps(data),
+                    value=json.dumps(payload),
                     callback=delivery_report
                 )
                 producer.flush()
