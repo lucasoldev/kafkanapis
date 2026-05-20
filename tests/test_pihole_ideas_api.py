@@ -1,6 +1,5 @@
 import re
 import requests
-import json
 import paramiko
 from datetime import datetime
 from urllib3.exceptions import InsecureRequestWarning
@@ -187,7 +186,7 @@ def main():
         ftl_status()
         
         # 5. Queries
-        print("\n📈 Queries ")
+        print("\n📈 Queries (last 24h, unique domains):")
         queries()
 
 if __name__ == "__main__":
