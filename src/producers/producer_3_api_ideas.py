@@ -125,7 +125,7 @@ def produce_api_ideas():
                     value=json.dumps(data),
                     callback=delivery_report
                 )
-                producer.poll(0)
+                producer.flush()
         
         # 2. Top clients
         data = request("/stats/top_clients", {"count": 5})
@@ -142,7 +142,7 @@ def produce_api_ideas():
                     value=json.dumps(data),
                     callback=delivery_report
                 )
-                producer.poll(0)
+                producer.flush()
         
         # 3. Upstream latency
         data = request("/stats/upstreams")
@@ -164,7 +164,7 @@ def produce_api_ideas():
                     value=json.dumps(data),
                     callback=delivery_report
                 )
-                producer.poll(0)
+                producer.flush()
         
         # 4. FTL status
         data = request("/info/ftl")
@@ -184,7 +184,7 @@ def produce_api_ideas():
                     value=json.dumps(data),
                     callback=delivery_report
                 )
-                producer.poll(0)
+                producer.flush()
         
         # 5. Queries
         import time as t
@@ -215,7 +215,7 @@ def produce_api_ideas():
                     value=json.dumps(data),
                     callback=delivery_report
                 )
-                producer.poll(0)
+                producer.flush()
         
         time.sleep(10)
 
