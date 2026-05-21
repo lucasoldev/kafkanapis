@@ -1,0 +1,42 @@
+{
+  "person": {
+    "topic": "fake-data.person",
+    "methods": ["name", "first_name", "last_name", "email", "phone_number", "cellphone_number", "cpf", "rg", "job"]
+  },
+  "address": {
+    "topic": "fake-data.address",
+    "methods": ["street_name", "building_number", "city", "state", "state_abbr", "postcode", "country", "address"]
+  },
+  "internet": {
+    "topic": "fake-data.internet",
+    "methods": ["url", "domain_name", "ipv4", "ipv6", "mac_address", "user_agent", "slug"]
+  },
+  "text": {
+    "topic": "fake-data.text",
+    "methods": ["sentence", "paragraph", "text", "word", "words"]
+  },
+  "numbers": {
+    "topic": "fake-data.numbers",
+    "methods": ["random_int", "random_digit", "random_number", "pyint", "pystr"]
+  },
+  "dates": {
+    "topic": "fake-data.dates",
+    "methods": ["date", "date_time", "time", "date_this_year", "date_this_month", "future_date", "past_date"]
+  },
+  "credit": {
+    "topic": "fake-data.credit",
+    "methods": ["credit_card_number", "credit_card_provider", "credit_card_security_code", "iban", "swift"]
+  },
+  "company": {
+    "topic": "fake-data.company",
+    "methods": ["company", "company_suffix", "catch_phrase", "job"]
+  },
+  "misc": {
+    "topic": "fake-data.misc",
+    "methods": ["color_name", "hex_color", "uuid4", "file_extension", "mime_type", "emoji", "password"]
+  },
+  "geo": {
+    "topic": "fake-data.geo",
+    "methods": ["latitude", "longitude", "coordinate"]
+  }
+}

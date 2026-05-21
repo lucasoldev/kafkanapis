@@ -7,6 +7,10 @@ Stop-Service -Name postgresql-x64-18 -Force
 entrar no postgres pelo docker:
 docker exec -it postgres psql -U postgres
 
+ver "log" do producer 1:
+sudo journalctl -u kafka-pihole-producer -f
+
+
 rodar arquivo simples que testa logs locais:
 python -m tests.test_pihole_log_reader
 python -m tests.test_pihole_log_api
