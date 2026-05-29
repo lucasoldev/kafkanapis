@@ -32,8 +32,8 @@
 | **Pi-hole (local)** | Tails `/var/log/pihole/pihole.log` from a **systemd service on a Raspberry Pi** |
 | **Pi-hole (API logs)** | Polls `/api/logs/dnsmasq`, `/logs/ftl`, `/logs/webserver` |
 | **Pi-hole (API)** | Fetches `/devices`, `/top_clients`, `/upstreams`, `/ftl`, `/system`, `/queries` |
-| **Public APIs** | External data from multiple free test APIs |
-| **Localhost Random API** | Synthetic data (people, companies, random text) via `Faker` + Flask |
+| **Public APIs** | External data from multiple free test APIs. See the [APIS_REFERENCE.md](APIS_REFERENCE.md) file for the full list. |
+| **Faker Data Generator** | Synthetic data (people, companies, random text) generated directly with `Faker` library |
 
 From there, **three independent consumers** subscribe to these topics and process the data:
 
@@ -56,7 +56,7 @@ From there, **three independent consumers** subscribe to these topics and proces
 | 🟡 Light Orange | Pi-hole Server | Pi-hole server with local logs and API |
 | 🟢 Light Green | Producer Service | Systemd service running the Pi-hole log producer |
 | 🟡 Light Yellow | 🖥️ Your Windows PC | Your local computer |
-| 🟢 Teal | 🐍 Python Application | Python code with consumers, producers and services |
+| 🟢 Teal | 🐍 Python Application | Python code with consumers, producers, services and `Faker` data generation |
 | 🟠 Orange | 📦 Kafka Cluster (KRaft) | Kafka cluster running in Docker (no Zookeeper) |
 | 🔵 Dark Blue | 🗄️ PostgreSQL | Database for persistence |
 | 🟢 Light Green | 🖥️ Kafka UI | Kafka UI for visual monitoring and management |
@@ -193,7 +193,7 @@ raspberry-files/
 |  | ✅ DNS logs via API (remote access) |
 |  | ✅ Metrics: devices, top clients, upstreams, FTL, system, queries |
 | **External APIs** | ✅ Multiple public APIs fetched as Kafka events |
-| **Synthetic Data** | ✅ Localhost random data generator with `Faker` |
+| **Synthetic Data** | ✅ `Faker` library used directly for data generation |
 | **Consumers** | ✅ **3 independent consumers** for parallel processing |
 |              | ✅ Logs, Metrics, and External data separation |
 | **Kafka** | ✅ Configurable topics, consumer groups, and partitioning |
@@ -210,12 +210,12 @@ raspberry-files/
 | **Producers**  | [Python](https://www.python.org/) + [`kafka-python`](https://kafka-python.readthedocs.io/) (Raspberry Pi + Windows) |
 | **Consumers**  | Python microservices |
 | **HTTP**       | [`requests`](https://docs.python-requests.org/) |
-| **APIs**       | [Pi-hole](https://pi-hole.net/), [ip-api.com](https://ip-api.com/), [viacep.com.br](https://viacep.com.br/), Localhost Random API |
+| **APIs**       | [Pi-hole](https://pi-hole.net/), External data from multiple free test APIs. See the [APIS_REFERENCE.md](APIS_REFERENCE.md) file for the full list. |
 | **Data**       | [`pandas`](https://pandas.pydata.org/) |
 | **Database**   | [PostgreSQL](https://www.postgresql.org/) + [`psycopg2-binary`](https://www.psycopg.org/) |
 | **Config**     | [`python-dotenv`](https://github.com/theskumar/python-dotenv) |
 | **Containers** | [Docker](https://www.docker.com/) + [Docker Compose](https://docs.docker.com/compose/) |
-| **Dev tools**  | [`venv`](https://docs.python.org/3/library/venv.html), [`Flask`](https://flask.palletsprojects.com/) (for localhost API) |
+| **Dev tools** | [`venv`](https://docs.python.org/3/library/venv.html), [`Faker`](https://faker.readthedocs.io/) |
 
 ---
 
@@ -287,10 +287,10 @@ sudo systemctl enable kafka-pihole-producer
 sudo systemctl start kafka-pihole-producer
 ```
 
-### 6. Run the localhost random API (separate terminal on Windows)
+### 6. Run the Faker producer (generates synthetic data on Windows)
 
 ```bash
-python -m src.services.random_api_server
+python -m src.producers.producer_5_faker
 ```
 
 > Runs a Flask server at `http://localhost:5000/random` powered by `Faker`.

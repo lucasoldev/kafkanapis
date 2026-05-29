@@ -1,9 +1,6 @@
 reduzir prompt:
 Function Prompt { "$( (Get-Location | Split-Path -Leaf) )> " }
 
-parar postgres local (como admin):
-Stop-Service -Name postgresql-x64-18 -Force
-
 entrar no postgres pelo docker:
 docker exec -it postgres psql -U postgres
 
@@ -34,6 +31,8 @@ rodar o consumer 1 no pc local
 python -m src.consumers.consumer_1_logs --test
 python -m src.consumers.consumer_1_logs
 
+---
+
 rodar o producer 2 no pc local
 python -m src.producers.producer_2_api_logs
 python -m src.producers.producer_2_api_logs --test
@@ -41,6 +40,30 @@ python -m src.producers.producer_2_api_logs --test
 rodar o consumer 2 no pc local
 python -m src.consumers.consumer_2_api_logs
 python -m src.consumers.consumer_2_api_logs --test
+
+---
+
+rodar o producer 3 no pc local
+python -m src.producers.producer_3_api_ideas
+python -m src.producers.producer_3_api_ideas --test
+
+rodar o consumer 3 no pc local
+python -m src.consumers.consumer_3_api_ideas
+python -m src.consumers.consumer_3_api_ideas --test
+
+---
+
+rodar o producer 5 no pc local
+python -m src.producers.producer_5_api_faker
+python -m src.producers.producer_5_api_faker --test
+
+rodar o consumer 5 no pc local
+python -m src.consumers.consumer_5_api_faker
+python -m src.consumers.consumer_5_api_faker --test
+
+---
+
+
 
 Kafka UI:
 http://localhost:8080/
