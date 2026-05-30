@@ -88,20 +88,7 @@ This document lists the public APIs used in the **Kafka n APIs** project. Each e
   return response.json()
   ```
 
-## 10. 4Devs
-- **URL:** https://www.4devs.com.br/
-- **Description:** Online tools (CPF generator)
-- **POST Example:**
-  ```python
-  response = requests.post(
-      "https://www.4devs.com.br/ferramentas_online.php",
-      data="acao=gerar_cpf&pontuacao=N&cpf_estado=",
-      headers={"Content-Type": "application/x-www-form-urlencoded"}
-  )
-  print(response.text)
-  ```
-
-## 11. IP Query IO
+## 10. IP Query IO
 - **URL:** https://ipquery.io/
 - **Description:** API providing information about an IP address, including geolocation and VPN detection
 - **GET Example:**
@@ -110,7 +97,7 @@ This document lists the public APIs used in the **Kafka n APIs** project. Each e
   return response.json()
   ```
 
-## 12. AwesomeAPI
+## 11. AwesomeAPI
 - **URL:** https://docs.awesomeapi.com.br/api-de-moedas
 - **Description:** Real-time currency exchange API with over 150 currencies!
 - **GET Example:**
@@ -119,7 +106,7 @@ This document lists the public APIs used in the **Kafka n APIs** project. Each e
   return response.json()
   ```
 
-## 13. UUID Generator API
+## 12. UUID Generator API
 - **URL:** https://www.uuidtools.com/docs?ref=freepublicapis.com
 - **Description:** Generates unique UUIDs and GUIDs via HTTP requests
 - **GET Example:**
@@ -128,21 +115,12 @@ This document lists the public APIs used in the **Kafka n APIs** project. Each e
   return response.json()
   ```
 
-## 14. TheMealDB
+## 13. TheMealDB
 - **URL:** https://www.themealdb.com/documentation
 - **Description:** Meal recipe API for developers and food lovers
 - **GET Example:**
   ```python
   response = requests.get("https://www.themealdb.com/api/json/v1/1/categories.php")
-  return response.json()
-  ```
-
-## 15. Webhook Site
-- **URL:** https://webhook-test.com/
-- **Description:** Webhook simulation site
-- **GET Example:**
-  ```python
-  response = requests.get("https://webhook.site/b7de792c-2bca-49af-91d4-e768a103ab61")
   return response.json()
   ```
 

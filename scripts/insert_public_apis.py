@@ -125,16 +125,9 @@ def main():
             "return_example": "response.json()"
         },
         {
-            "site_name": "4Devs",
-            "description": "Online tools (CPF generator)",
-            "url": "https://www.4devs.com.br/",
-            "get_endpoint": "POST: https://www.4devs.com.br/ferramentas_online.php",
-            "return_example": "print(response.text)"
-        },
-        {
             "site_name": "IP Query IO",
             "description": "API providing information about an IP address, including geolocation and VPN detection",
-            "url": "https://ipquery.io/",
+            "url": "https://api.ipquery.io/?format=json",
             "get_endpoint": "https://api.ipquery.io/",
             "return_example": "response.json()"
         },
@@ -157,13 +150,6 @@ def main():
             "description": "Meal recipe API for developers and food lovers",
             "url": "https://www.themealdb.com/documentation",
             "get_endpoint": "https://www.themealdb.com/api/json/v1/1/categories.php",
-            "return_example": "response.json()"
-        },
-        {
-            "site_name": "Webhook Site",
-            "description": "Webhook simulation site",
-            "url": "https://webhook-test.com/",
-            "get_endpoint": "https://webhook.site/b7de792c-2bca-49af-91d4-e768a103ab61",
             "return_example": "response.json()"
         }
     ]
