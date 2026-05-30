@@ -8,7 +8,7 @@ flowchart TD
         direction TB
         subgraph PiHole [Pi-hole Server]
             P1[Local File /var/log/pihole.log]
-            P2[API Endpoints /api/logs/dnsmasq /api/stats/summary /api/stats/top_domains /api/dns/blocking /api/info/ftl /api/info/system /api/network/gateway]
+            P2[API Endpoints /api/logs/dnsmasq /api/logs/ftl /api/logs/webserver]
         end
 
         subgraph ProducerService [Producer (Systemd Service)]
@@ -20,7 +20,7 @@ flowchart TD
         direction TB
         subgraph Docker [🐳 Docker Services]
             direction TB
-            subgraph KafkaCluster [📦 Kafka & Zookeeper]
+            subgraph KafkaCluster [📦 Kafka Cluster (KRaft)]
                 K1[Kafka Broker <br/>localhost:9092]
             end
             subgraph KafkaUI [🖥️ Kafka UI]
@@ -33,20 +33,18 @@ flowchart TD
 
         subgraph PythonApp [🐍 Python Application]
             direction TB
-            subgraph Consumers [Consumers]
-                C1[Consumer 1 - Logs]
-                C2[Consumer 2 - Metrics]
-                C3[Consumer 3 - External]
-            end
-            subgraph Services [Internal Services]
-                S1[Random API Server Flask + Faker]
-                S2[Kafka Client]
-            end
-            subgraph Producers [Other Producers]
+            subgraph Producers [Producers]
                 PF2[Public API Fetcher]
-                PF3[Random API Fetcher]
+                PF3[Faker Producer]
                 PP1[Pi-hole API Logs Poller]
                 PP2[Pi-hole Data Poller]
+            end
+            subgraph Consumers [Consumers]
+                C1[Consumer 1 - Logs]
+                C2[Consumer 2 - API Logs]
+                C3[Consumer 3 - Metrics]
+                C4[Consumer 4 - Public APIs]
+                C5[Consumer 5 - Faker]
             end
         end
     end
@@ -63,15 +61,17 @@ flowchart TD
     P1 --> PF1
     PF1 -->|Local Network| K1
     
-    S1 --> PF3
-
     K1 --> C1
     K1 --> C2
     K1 --> C3
+    K1 --> C4
+    K1 --> C5
 
     C1 --> DB1
     C2 --> DB1
     C3 --> DB1
+    C4 --> DB1
+    C5 --> DB1
 
     %% Styles
     classDef internet fill:#e1f5fe,stroke:#01579b,stroke-width:2px

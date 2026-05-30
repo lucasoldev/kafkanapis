@@ -5,7 +5,7 @@
 
 **Streaming Pi-hole DNS events, Public API data, and Localhost Random Data through Kafka**
 
-`Kafka n APIs` ingests data from **five independent sources** into Apache Kafka topics, where **three independent consumers** process, correlate, and act on these event streams.
+`Kafka n APIs` ingests data from **five independent sources** into Apache Kafka topics, where **five independent consumers** process, correlate, and act on these event streams.
 
 ---
 
@@ -35,11 +35,13 @@
 | **Public APIs** | External data from multiple free test APIs. See the [APIS_REFERENCE.md](APIS_REFERENCE.md) file for the full list. |
 | **Faker Data Generator** | Synthetic data (people, companies, random text) generated directly with `Faker` library |
 
-From there, **three independent consumers** subscribe to these topics and process the data:
+From there, **five independent consumers** subscribe to these topics and process the data:
 
-1. **Consumer 1** – processes DNS logs (local + API)
-2. **Consumer 2** – processes metrics and system data
-3. **Consumer 3** – processes external and synthetic data
+1. **Consumer 1** – processes DNS logs (local file)
+2. **Consumer 2** – processes API logs (dnsmasq, ftl, webserver)
+3. **Consumer 3** – processes metrics and system data
+4. **Consumer 4** – processes external data (public APIs)
+5. **Consumer 5** – processes synthetic data (Faker)
 
 ---
 
@@ -63,17 +65,17 @@ From there, **three independent consumers** subscribe to these topics and proces
 
 ---
 
-## 📁 **Project Structure**
-
-![Project Structure](mermaid-diagrams/project_structure.png)
-
 ### 🗂️ Directory Tree
 
 ```
-kafka-n-apis/
+kafkanapis/
 ├── .env
+├── akhq-config.yml
+├── APIS_REFERENCE.md
+├── comandos-rapidos.txt
 ├── config.py
 ├── docker-compose.yml
+├── faker_packages.json
 ├── mermaid-diagrams/
 │   ├── architecture-code.mmd
 │   ├── architecture.png
@@ -87,15 +89,32 @@ kafka-n-apis/
 │   └── requirements.txt
 ├── README.md
 ├── requirements.txt
+├── scripts/
+│   ├── __init__.py
+│   └── insert_public_apis.py
 ├── src/
 │   ├── __init__.py
-│   └── consumers/
+│   ├── consumers/
+│   │   ├── __init__.py
+│   │   ├── consumer_1_logs.py
+│   │   ├── consumer_2_api_logs.py
+│   │   ├── consumer_3_api_ideas.py
+│   │   ├── consumer_4_public_apis.py
+│   │   ├── consumer_5_faker.py
+│   │   └── test_consumer.py
+│   └── producers/
 │       ├── __init__.py
-│       └── consumer_1_logs.py
-└── tests/
-    ├── __init__.py
-    ├── test_pihole_log_api.py
-    └── test_pihole_log_reader.py
+│       ├── producer_2_api_logs.py
+│       ├── producer_3_api_ideas.py
+│       ├── producer_4_public_apis.py
+│       └── producer_5_faker.py
+├── tests/
+│   ├── __init__.py
+│   ├── test.py
+│   ├── test_pihole_ideas_api.py
+│   ├── test_pihole_log_api.py
+│   ├── test_pihole_log_reader.py
+│   └── tkinter-test.py
 ```
 
 ### 🗂️ Raspberry Pi Directory (Representation)
@@ -132,23 +151,24 @@ raspberry-files/
 | `pi_hole_api_logs_poller.py` | Polls the `/api/logs/dnsmasq` endpoint every N seconds and sends to `pi-hole.logs.api` |
 | `pi_hole_data_poller.py` | Queries endpoints `/devices`, `/top_clients`, `/upstreams`, `/ftl`, `/system`, `/queries` and sends to `pi-hole.data.endpoints` |
 | `public_api_fetcher.py` | Makes requests to public APIs (ip-api, viacep, etc.) and sends to `public.api.data` |
-| `random_api_fetcher.py` | Queries `http://localhost:5000/random` and sends to `random.data.raw` |
+| `faker_producer.py` | Generates synthetic data using the `Faker` library and sends to `fake-data.*` topics |
 
 #### **Consumers (src/consumers/ - Windows)**
 
 | File | Description |
 |------|-------------|
 | `base_consumer.py` | Abstract class with common methods (Kafka connection, message consumption, processing) |
-| `consumer_1_logs.py` | Subscribes to topics `pi-hole.logs.file` and `pi-hole.logs.api` and processes DNS logs |
-| `consumer_2_metrics.py` | Subscribes to topic `pi-hole.data.endpoints` and processes metrics (devices, top clients, upstreams, FTL, system, queries) |
-| `consumer_3_external.py` | Subscribes to topics `public.api.data` and `random.data.raw` and processes external data |
+| `consumer_1_logs.py` | Subscribes to topic `pi-hole.logs.file` and processes DNS logs (local file) |
+| `consumer_2_api_logs.py` | Subscribes to topic `pi-hole.logs.api` and processes API logs (dnsmasq, ftl, webserver) |
+| `consumer_3_metrics.py` | Subscribes to topic `pi-hole.data.endpoints` and processes metrics (devices, top clients, upstreams, FTL, system, queries) |
+| `consumer_4_public_apis.py` | Subscribes to topic `public.api.data` and processes external data |
+| `consumer_5_faker.py` | Subscribes to topics `fake-data.*` and processes synthetic data |
 
 #### **Services (src/services/ - Windows)**
 
 | File | Description |
 |------|-------------|
 | `api_client.py` | Reusable HTTP client for calling external APIs (error handling, retry, timeouts) |
-| `random_api_server.py` | Flask server that generates random data at `/random` |
 | `kafka_client.py` | Encapsulates Kafka connection (production and consumption) |
 
 #### **Models (src/models/ - Windows)**
@@ -158,7 +178,7 @@ raspberry-files/
 | `pi_hole_log.py` | Schema for Pi-hole logs (timestamp, client, domain, status) |
 | `pi_hole_metric.py` | Schema for metrics (devices, top clients, upstreams, etc.) |
 | `public_api_data.py` | Schema for public API data (geolocation, etc.) |
-| `random_data.py` | Schema for random data (id, value, category, timestamp) |
+| `fake_data.py` | Schema for synthetic data (id, value, category, timestamp) |
 
 #### **Configuration (src/config/ - Windows)**
 
@@ -179,7 +199,7 @@ raspberry-files/
 
 | File | Description |
 |------|-------------|
-| `create_topics.sh` | Creates Kafka topics: `pi-hole.logs.file`, `pi-hole.logs.api`, `pi-hole.data.endpoints`, `public.api.data`, `random.data.raw` |
+| `create_topics.sh` | Creates Kafka topics: `pi-hole.logs.file`, `pi-hole.logs.api`, `pi-hole.data.endpoints`, `public.api.data`, `fake-data.*` |
 | `delete_topics.sh` | Removes topics (useful for cleanup) |
 | `start_producers.sh` | Starts all producers in the background |
 
@@ -194,8 +214,8 @@ raspberry-files/
 |  | ✅ Metrics: devices, top clients, upstreams, FTL, system, queries |
 | **External APIs** | ✅ Multiple public APIs fetched as Kafka events |
 | **Synthetic Data** | ✅ `Faker` library used directly for data generation |
-| **Consumers** | ✅ **3 independent consumers** for parallel processing |
-|              | ✅ Logs, Metrics, and External data separation |
+| **Consumers** | ✅ **5 independent consumers** for parallel processing |
+|              | ✅ Logs, API logs, Metrics, External data, and Synthetic data separation |
 | **Kafka** | ✅ Configurable topics, consumer groups, and partitioning |
 | **Deployment** | ✅ Designed for local development with Docker Compose |
 | **Future Ready** | ✅ Extensible architecture for new data sources |
@@ -215,7 +235,7 @@ raspberry-files/
 | **Database**   | [PostgreSQL](https://www.postgresql.org/) + [`psycopg2-binary`](https://www.psycopg.org/) |
 | **Config**     | [`python-dotenv`](https://github.com/theskumar/python-dotenv) |
 | **Containers** | [Docker](https://www.docker.com/) + [Docker Compose](https://docs.docker.com/compose/) |
-| **Dev tools** | [`venv`](https://docs.python.org/3/library/venv.html), [`Faker`](https://faker.readthedocs.io/) |
+| **Dev tools**  | [`venv`](https://docs.python.org/3/library/venv.html), [`Faker`](https://faker.readthedocs.io/) |
 
 ---
 
@@ -290,26 +310,34 @@ sudo systemctl start kafka-pihole-producer
 ### 6. Run the Faker producer (generates synthetic data on Windows)
 
 ```bash
-python -m src.producers.producer_5_faker
+python -m src.producers.faker_producer
 ```
 
-> Runs a Flask server at `http://localhost:5000/random` powered by `Faker`.
+### 7. Run the consumers (five separate terminals on Windows)
 
-### 7. Run the consumers (three separate terminals on Windows)
-
-**Consumer 1 (DNS logs):**
+**Consumer 1 (local logs):**
 ```bash
 python -m src.consumers.consumer_1_logs
 ```
 
-**Consumer 2 (Metrics and system data):**
+**Consumer 2 (API logs):**
 ```bash
-python -m src.consumers.consumer_2_metrics
+python -m src.consumers.consumer_2_api_logs
 ```
 
-**Consumer 3 (External and synthetic data):**
+**Consumer 3 (Metrics and system data):**
 ```bash
-python -m src.consumers.consumer_3_external
+python -m src.consumers.consumer_3_metrics
+```
+
+**Consumer 4 (Public APIs):**
+```bash
+python -m src.consumers.consumer_4_public_apis
+```
+
+**Consumer 5 (Faker data):**
+```bash
+python -m src.consumers.consumer_5_faker
 ```
 
 ---
@@ -362,19 +390,29 @@ docker exec -it kafka kafka-console-consumer.sh --bootstrap-server localhost:909
 
 ### Running consumers (if not already running)
 
-**Consumer 1 (DNS logs):**
+**Consumer 1 (local logs):**
 ```bash
 python -m src.consumers.consumer_1_logs
 ```
 
-**Consumer 2 (Metrics and system data):**
+**Consumer 2 (API logs):**
 ```bash
-python -m src.consumers.consumer_2_metrics
+python -m src.consumers.consumer_2_api_logs
 ```
 
-**Consumer 3 (External and synthetic data):**
+**Consumer 3 (Metrics and system data):**
 ```bash
-python -m src.consumers.consumer_3_external
+python -m src.consumers.consumer_3_metrics
+```
+
+**Consumer 4 (Public APIs):**
+```bash
+python -m src.consumers.consumer_4_public_apis
+```
+
+**Consumer 5 (Faker data):**
+```bash
+python -m src.consumers.consumer_5_faker
 ```
 
 ---
