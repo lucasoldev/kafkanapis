@@ -160,7 +160,7 @@ raspberry-files/
 | `base_consumer.py` | Abstract class with common methods (Kafka connection, message consumption, processing) |
 | `consumer_1_logs.py` | Subscribes to topic `pi-hole.logs.file` and processes DNS logs (local file) |
 | `consumer_2_api_logs.py` | Subscribes to topic `pi-hole.logs.api` and processes API logs (dnsmasq, ftl, webserver) |
-| `consumer_3_metrics.py` | Subscribes to topic `pi-hole.data.endpoints` and processes metrics (devices, top clients, upstreams, FTL, system, queries) |
+| `consumer_3_api_ideas.py` | Subscribes to topic `pi-hole.data.endpoints` and processes metrics (devices, top clients, upstreams, FTL, system, queries) |
 | `consumer_4_public_apis.py` | Subscribes to topic `public.api.data` and processes external data |
 | `consumer_5_faker.py` | Subscribes to topics `fake-data.*` and processes synthetic data |
 
@@ -327,7 +327,7 @@ python -m src.consumers.consumer_2_api_logs
 
 **Consumer 3 (Metrics and system data):**
 ```bash
-python -m src.consumers.consumer_3_metrics
+python -m src.consumers.consumer_3_api_ideas
 ```
 
 **Consumer 4 (Public APIs):**
@@ -402,7 +402,7 @@ python -m src.consumers.consumer_2_api_logs
 
 **Consumer 3 (Metrics and system data):**
 ```bash
-python -m src.consumers.consumer_3_metrics
+python -m src.consumers.consumer_3_api_ideas
 ```
 
 **Consumer 4 (Public APIs):**
