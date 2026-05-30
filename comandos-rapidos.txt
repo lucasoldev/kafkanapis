@@ -53,13 +53,23 @@ python -m src.consumers.consumer_3_api_ideas --test
 
 ---
 
+rodar o producer 4 no pc local
+python -m src.producers.producer_4_public_apis
+python -m src.producers.producer_4_public_apis --test
+
+rodar o consumer 4 no pc local
+python -m src.consumers.consumer_4_public_apis
+python -m src.consumers.consumer_4_public_apis --test
+
+---
+
 rodar o producer 5 no pc local
-python -m src.producers.producer_5_api_faker
-python -m src.producers.producer_5_api_faker --test
+python -m src.producers.producer_5_faker
+python -m src.producers.producer_5_faker --test
 
 rodar o consumer 5 no pc local
-python -m src.consumers.consumer_5_api_faker
-python -m src.consumers.consumer_5_api_faker --test
+python -m src.consumers.consumer_5_faker
+python -m src.consumers.consumer_5_faker --test
 
 ---
 

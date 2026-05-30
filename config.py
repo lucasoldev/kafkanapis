@@ -23,7 +23,10 @@ class Config:
     # Kafka
     KAFKA_BOOTSTRAP = os.getenv('KAFKA_BOOTSTRAP')
     PIHOLE_LOCAL_LOG_TOPIC = os.getenv('PIHOLE_LOCAL_LOG_TOPIC')
+    PUBLIC_APIS_TOPIC = os.getenv('PUBLIC_APIS_TOPIC')
     PIHOLE_API_LOG_TOPIC = os.getenv('PIHOLE_API_LOG_TOPIC')
+
+    
 
     # Pi-hole API Ideas Topics
     PIHOLE_IDEAS_TOPIC_NETWORK_DEVICES = os.getenv('PIHOLE_IDEAS_TOPIC_NETWORK_DEVICES')
@@ -40,6 +43,7 @@ class Config:
     # Database names
     PIHOLE_DB_LOCAL_LOGS = os.getenv('PIHOLE_DB_LOCAL_LOGS', 'pihole_local_logs')
     PIHOLE_DB_API_LOGS = os.getenv('PIHOLE_DB_API_LOGS', 'pihole_api_logs')
+    DB_PUBLIC_APIS = os.getenv('DB_PUBLIC_APIS', 'public_apis')
     PIHOLE_DB_API_IDEAS = os.getenv('PIHOLE_DB_API_IDEAS', 'pihole_api_ideas')
 
 config = Config()
