@@ -8,15 +8,13 @@ ver "log" do producer 1:
 sudo journalctl -u kafka-pihole-producer -f
 
 
+
 rodar arquivo simples que testa logs locais:
 python -m tests.test_pihole_log_reader
 python -m tests.test_pihole_log_api
 
 log do pihole:
 /var/log/pihole/pihole.log
-
-ver logs do serviço produtor:
-sudo journalctl -u kafka-pihole-producer -f
 
 docker start kafka
 

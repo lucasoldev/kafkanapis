@@ -18,7 +18,7 @@ services:
       - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
     networks:
       - kafka-net
-  
+
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: kafka-ui
@@ -33,6 +33,31 @@ services:
     networks:
       - kafka-net
 
+  kafdrop:
+    image: obsidiandynamics/kafdrop:latest
+    container_name: kafdrop
+    ports:
+      - "9000:9000"
+    environment:
+      - KAFKA_BROKERCONNECT=kafka:9092
+      - JVM_OPTS=-Xms32M -Xmx64M
+    depends_on:
+      - kafka
+    networks:
+      - kafka-net
+
+  akhq:
+    image: tchiotludo/akhq:latest
+    container_name: akhq
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./akhq-config.yml:/app/application.yml
+    depends_on:
+      - kafka
+    networks:
+      - kafka-net
+
   postgres:
     image: postgres:15
     container_name: postgres
@@ -41,7 +66,7 @@ services:
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - POSTGRES_DB=postgres  # <-- Default PostgreSQL DB
+      - POSTGRES_DB=postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
