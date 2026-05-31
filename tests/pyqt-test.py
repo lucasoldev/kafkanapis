@@ -13,18 +13,21 @@ class ServiceControl(QMainWindow):
         self.setWindowTitle("Kafka n APIs Control Panel")
         self.setGeometry(100, 100, 800, 500)
         
-        # Lista de serviços
-        self.services = [
-            ("producer_2_api_logs", "Producer"),
-            ("producer_3_api_ideas", "Producer"),
-            ("producer_4_public_apis", "Producer"),
-            ("producer_5_faker", "Producer"),
-            ("consumer_1_logs", "Consumer"),
-            ("consumer_2_api_logs", "Consumer"),
-            ("consumer_3_api_ideas", "Consumer"),
-            ("consumer_4_public_apis", "Consumer"),
-            ("consumer_5_faker", "Consumer")
-        ]
+        # Caminho do Python dentro do venv
+        self.python_path = r"X:\Bibliotecas\Imagens\Git_profissa\kafkanapis\venv\Scripts\python.exe"
+        
+        # Mapeamento: nome_amigável -> nome_do_módulo
+        self.services = {
+            "producer_2_api_logs": "src.producers.producer_2_api_logs",
+            "producer_3_api_ideas": "src.producers.producer_3_api_ideas",
+            "producer_4_public_apis": "src.producers.producer_4_public_apis",
+            "producer_5_faker": "src.producers.producer_5_faker",
+            "consumer_1_logs": "src.consumers.consumer_1_logs",
+            "consumer_2_api_logs": "src.consumers.consumer_2_api_logs",
+            "consumer_3_api_ideas": "src.consumers.consumer_3_api_ideas",
+            "consumer_4_public_apis": "src.consumers.consumer_4_public_apis",
+            "consumer_5_faker": "src.consumers.consumer_5_faker"
+        }
         
         self.initUI()
         self.refresh_status()
@@ -54,32 +57,27 @@ class ServiceControl(QMainWindow):
         
         central_widget.setLayout(layout)
     
-    def get_status(self, service):
+    def get_status(self, service_module):
         """Retorna o status de um serviço."""
         try:
-            if service.startswith("producer"):
-                result = subprocess.run(
-                    f'tasklist /fi "imagename eq python.exe" /v | findstr "{service}"',
-                    shell=True, capture_output=True, text=True
-                )
-                return "Running" if result.stdout else "Stopped"
-            else:
-                result = subprocess.run(f'sc query {service}', shell=True, capture_output=True, text=True)
-                if "RUNNING" in result.stdout:
-                    return "Running"
-                return "Stopped"
+            result = subprocess.run(
+                f'tasklist /fi "imagename eq python.exe" /v | findstr "{service_module}"',
+                shell=True, capture_output=True, text=True
+            )
+            return "Running" if result.stdout else "Stopped"
         except:
             return "Unknown"
     
     def refresh_status(self):
         self.table.setRowCount(len(self.services))
-        for i, (service, service_type) in enumerate(self.services):
-            # Nome
-            self.table.setItem(i, 0, QTableWidgetItem(service))
-            # Tipo
+        for i, (display_name, service_module) in enumerate(self.services.items()):
+            # Nome amigável
+            self.table.setItem(i, 0, QTableWidgetItem(display_name))
+            # Tipo (producer/consumer)
+            service_type = "Producer" if "producer" in service_module else "Consumer"
             self.table.setItem(i, 1, QTableWidgetItem(service_type))
             # Status
-            status = self.get_status(service)
+            status = self.get_status(service_module)
             status_item = QTableWidgetItem(status)
             if status == "Running":
                 status_item.setBackground(Qt.GlobalColor.green)
@@ -95,17 +93,17 @@ class ServiceControl(QMainWindow):
             btn_start = QPushButton()
             btn_start.setIcon(qta.icon('fa5s.play'))
             btn_start.setToolTip("Start")
-            btn_start.clicked.connect(lambda _, s=service: self.action(s, "start"))
+            btn_start.clicked.connect(lambda _, m=service_module: self.action(m, "start"))
             
             btn_stop = QPushButton()
             btn_stop.setIcon(qta.icon('fa5s.stop'))
             btn_stop.setToolTip("Stop")
-            btn_stop.clicked.connect(lambda _, s=service: self.action(s, "stop"))
+            btn_stop.clicked.connect(lambda _, m=service_module: self.action(m, "stop"))
             
             btn_restart = QPushButton()
             btn_restart.setIcon(qta.icon('fa5s.sync-alt'))
             btn_restart.setToolTip("Restart")
-            btn_restart.clicked.connect(lambda _, s=service: self.action(s, "restart"))
+            btn_restart.clicked.connect(lambda _, m=service_module: self.action(m, "restart"))
             
             btn_layout.addWidget(btn_start)
             btn_layout.addWidget(btn_stop)
@@ -113,22 +111,22 @@ class ServiceControl(QMainWindow):
             btn_widget.setLayout(btn_layout)
             self.table.setCellWidget(i, 3, btn_widget)
     
-    def action(self, service, action):
+    def action(self, service_module, action):
         try:
             if action == "start":
                 subprocess.Popen(
-                    f'start cmd /k "python -m src.{service}"',
+                    f'start cmd /k "{self.python_path} -m {service_module}"',
                     shell=True
                 )
             elif action == "stop":
                 subprocess.run(
-                    f'taskkill /f /im python.exe /fi "windowtitle eq {service}"',
+                    f'taskkill /f /im python.exe /fi "windowtitle eq {service_module}"',
                     shell=True
                 )
             elif action == "restart":
-                self.action(service, "stop")
+                self.action(service_module, "stop")
                 time.sleep(1)
-                self.action(service, "start")
+                self.action(service_module, "start")
             self.refresh_status()
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))

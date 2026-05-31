@@ -37,9 +37,10 @@ def insert_log(conn, data):
     # Convert timestamp from "May 14 00:40:02" to "2026-05-14 00:40:02"
     raw_timestamp = data.get('timestamp')
     try:
-        dt = datetime.strptime(raw_timestamp, '%b %d %H:%M:%S')
-        dt = dt.replace(year=datetime.now().year)
-        timestamp = datetime.fromtimestamp(data.get('timestamp_epoch')).strftime('%Y-%m-%d %H:%M:%S')
+        # Adiciona o ano atual ao timestamp antes do parse
+        current_year = datetime.now().year
+        dt = datetime.strptime(f"{current_year} {raw_timestamp}", '%Y %b %d %H:%M:%S')
+        timestamp = dt.strftime('%Y-%m-%d %H:%M:%S')
     except:
         timestamp = None
     
