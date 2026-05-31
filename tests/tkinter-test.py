@@ -1,21 +1,27 @@
 import tkinter as tk
 from tkinter import ttk
 import subprocess
+import time
 
 class ServiceControl:
     def __init__(self, root):
         self.root = root
         self.root.title("Kafka n APIs Control Panel")
-        self.root.geometry("600x400")
+        self.root.geometry("700x500")
         
-        # Lista de serviços (exceto o primeiro produtor)
+        # Lista de serviços (exceto o primeiro produtor do Raspberry Pi)
         self.services = [
-            "producer_public_apis",
-            "producer_faker",
+            # Producers
+            "producer_2_api_logs",
+            "producer_3_api_ideas",
+            "producer_4_public_apis",
+            "producer_5_faker",
+            # Consumers
             "consumer_1_logs",
-            "consumer_2_metrics",
-            "consumer_3_external",
-            "consumer_public_apis"
+            "consumer_2_api_logs",
+            "consumer_3_api_ideas",
+            "consumer_4_public_apis",
+            "consumer_5_faker"
         ]
         
         self.status = {}
@@ -64,14 +70,18 @@ class ServiceControl:
         ttk.Button(frame, text="🔄 Refresh", command=self.refresh_status).grid(row=len(self.services)+1, column=0, columnspan=5, pady=10)
     
     def get_status(self, service):
-        """Retorna o status de um serviço via systemctl (para Linux) ou sc (para Windows)."""
-        # Para Windows, usamos 'sc' ou 'tasklist'
+        """Retorna o status de um serviço no Windows."""
         try:
             if service.startswith("producer"):
-                # Processos Python
-                result = subprocess.run(f'tasklist /fi "imagename eq python.exe" /v | findstr "{service}"', shell=True, capture_output=True, text=True)
+                # Para produtores (processos Python)
+                # Procura pelo nome do módulo na lista de processos
+                result = subprocess.run(
+                    f'tasklist /fi "imagename eq python.exe" /v | findstr "{service}"',
+                    shell=True, capture_output=True, text=True
+                )
                 return "Running" if result.stdout else "Stopped"
             else:
+                # Para consumidores (serviços Windows)
                 result = subprocess.run(f'sc query {service}', shell=True, capture_output=True, text=True)
                 if "RUNNING" in result.stdout:
                     return "Running"
@@ -88,21 +98,26 @@ class ServiceControl:
     
     def action(self, service, action):
         """Executa uma ação (start, stop, restart) no serviço."""
-        # Para Windows, usamos 'sc' ou 'taskkill'
         try:
             if service.startswith("producer"):
                 if action == "start":
                     # Inicia o produtor em uma nova janela
-                    subprocess.Popen(f'start cmd /k "python -m src.producers.{service}"', shell=True)
+                    subprocess.Popen(
+                        f'start cmd /k "python -m src.producers.{service}"',
+                        shell=True
+                    )
                 elif action == "stop":
                     # Para o processo
-                    subprocess.run(f'taskkill /f /im python.exe /fi "windowtitle eq {service}"', shell=True)
+                    subprocess.run(
+                        f'taskkill /f /im python.exe /fi "windowtitle eq {service}"',
+                        shell=True
+                    )
                 elif action == "restart":
                     self.action(service, "stop")
                     time.sleep(1)
                     self.action(service, "start")
             else:
-                # Para consumidores, usamos sc
+                # Para consumidores (serviços Windows)
                 subprocess.run(f'sc {action} {service}', shell=True)
             self.refresh_status()
         except Exception as e:

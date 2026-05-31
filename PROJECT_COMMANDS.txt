@@ -1,80 +1,78 @@
-reduzir prompt:
+Reduce PowerShell prompt:
 Function Prompt { "$( (Get-Location | Split-Path -Leaf) )> " }
 
-entrar no postgres pelo docker:
+Access PostgreSQL inside the Docker container:
 docker exec -it postgres psql -U postgres
 
-ver "log" do producer 1:
+View Producer 1 logs:
 sudo journalctl -u kafka-pihole-producer -f
 
-
-
-rodar arquivo simples que testa logs locais:
+Run local log testing scripts:
 python -m tests.test_pihole_log_reader
 python -m tests.test_pihole_log_api
 
-log do pihole:
+Pi-hole log file:
 /var/log/pihole/pihole.log
 
+Start Kafka container:
 docker start kafka
 
+Stop and start all containers:
 docker-compose down
 docker-compose up -d
 
-executar o leitor do consumer no docker:
+Run a Kafka consumer inside Docker:
 docker exec -it kafka bash
 /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic pi-hole.logs.file --from-beginning
 
-rodar o consumer 1 no pc local
+Run Consumer 1 locally:
 python -m src.consumers.consumer_1_logs --test
 python -m src.consumers.consumer_1_logs
 
 ---
 
-rodar o producer 2 no pc local
+Run Producer 2 locally:
 python -m src.producers.producer_2_api_logs
 python -m src.producers.producer_2_api_logs --test
 
-rodar o consumer 2 no pc local
+Run Consumer 2 locally:
 python -m src.consumers.consumer_2_api_logs
 python -m src.consumers.consumer_2_api_logs --test
 
 ---
 
-rodar o producer 3 no pc local
+Run Producer 3 locally:
 python -m src.producers.producer_3_api_ideas
 python -m src.producers.producer_3_api_ideas --test
 
-rodar o consumer 3 no pc local
+Run Consumer 3 locally:
 python -m src.consumers.consumer_3_api_ideas
 python -m src.consumers.consumer_3_api_ideas --test
 
 ---
 
-rodar o producer 4 no pc local
+Run Producer 4 locally:
 python -m src.producers.producer_4_public_apis
 python -m src.producers.producer_4_public_apis --test
 
-rodar o consumer 4 no pc local
+Run Consumer 4 locally:
 python -m src.consumers.consumer_4_public_apis
 python -m src.consumers.consumer_4_public_apis --test
 
 ---
 
-rodar o producer 5 no pc local
+Run Producer 5 locally:
 python -m src.producers.producer_5_faker
 python -m src.producers.producer_5_faker --test
 
-rodar o consumer 5 no pc local
+Run Consumer 5 locally:
 python -m src.consumers.consumer_5_faker
 python -m src.consumers.consumer_5_faker --test
 
 ---
 
-
-
 Kafka UI:
 http://localhost:8080/
 
-verificar se kafka está usando o kraft:
+Verify whether Kafka is running in KRaft mode:
 docker exec -it kafka bash -c "ls /opt/kafka/bin | grep kraft"
