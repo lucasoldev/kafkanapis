@@ -1,5 +1,5 @@
-import sys
 import subprocess
+import sys
 import time
 import qtawesome as qta
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
@@ -73,7 +73,7 @@ class ServiceControl(QMainWindow):
         for i, (display_name, service_module) in enumerate(self.services.items()):
             # Nome amigável
             self.table.setItem(i, 0, QTableWidgetItem(display_name))
-            # Tipo (producer/consumer)
+            # Tipo
             service_type = "Producer" if "producer" in service_module else "Consumer"
             self.table.setItem(i, 1, QTableWidgetItem(service_type))
             # Status
@@ -114,8 +114,9 @@ class ServiceControl(QMainWindow):
     def action(self, service_module, action):
         try:
             if action == "start":
+                # Força a codificação UTF-8 no terminal
                 subprocess.Popen(
-                    f'start cmd /k "{self.python_path} -m {service_module}"',
+                    f'start /wait cmd /k "chcp 65001 > nul && {self.python_path} -m {service_module}"',
                     shell=True
                 )
             elif action == "stop":
