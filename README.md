@@ -114,7 +114,7 @@ kafkanapis/
 │   ├── test_pihole_ideas_api.py
 │   ├── test_pihole_log_api.py
 │   ├── test_pihole_log_reader.py
-│   └── tkinter-test.py
+│   └── pyqt-test.py
 ```
 
 ### 🗂️ Raspberry Pi Directory (Representation)
