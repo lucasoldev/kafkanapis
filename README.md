@@ -72,7 +72,7 @@ kafkanapis/
 ├── .env
 ├── akhq-config.yml
 ├── APIS_REFERENCE.md
-├── comandos-rapidos.txt
+├── PROJECT_COMMANDS.txt
 ├── config.py
 ├── docker-compose.yml
 ├── faker_packages.json
