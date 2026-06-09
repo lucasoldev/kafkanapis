@@ -117,17 +117,7 @@ kafkanapis/
 │   └── pyqt-test.py
 ```
 
-### 🗂️ Raspberry Pi Directory (Representation)
-
-> ⚠️ **Note:** This directory in the repository is a **representation** of how the files should be organized on the Raspberry Pi. It is **not meant to be copied directly** to the Raspberry Pi — it serves as a reference for the expected structure.
-
-```
-raspberry-files/
-├── .env
-├── config.py
-├── producer.py
-└── requirements.txt
-```
+### 🗂️ Raspberry Pi Directory 
 
 **On the actual Raspberry Pi, the files should be located at:**
 
@@ -143,65 +133,38 @@ raspberry-files/
 
 ### 📄 **Main Files Breakdown**
 
-#### **Producers (src/producers/ - Windows)**
+### **Producers (src/producers/)**
 
 | File | Description |
-|------|-------------|
-| `base_producer.py` | Abstract class with common methods (Kafka connection, message sending, error handling) |
-| `pi_hole_api_logs_poller.py` | Polls the `/api/logs/dnsmasq` endpoint every N seconds and sends to `pi-hole.logs.api` |
-| `pi_hole_data_poller.py` | Queries endpoints `/devices`, `/top_clients`, `/upstreams`, `/ftl`, `/system`, `/queries` and sends to `pi-hole.data.endpoints` |
-| `public_api_fetcher.py` | Makes requests to public APIs (ip-api, viacep, etc.) and sends to `public.api.data` |
-| `faker_producer.py` | Generates synthetic data using the `Faker` library and sends to `fake-data.*` topics |
+|---------|-----------|
+| `producer_2_api_logs.py` | Polls Pi-hole API logs (`/logs/dnsmasq`, `/logs/ftl`, `/logs/webserver`) |
+| `producer_3_api_ideas.py` | Fetches data from Pi-hole API endpoints (`/devices`, `/top_clients`, `/upstreams`, `/ftl`, `/system`, `/queries`) |
+| `producer_4_public_apis.py` | Fetches data from public APIs |
+| `producer_5_faker.py` | Generates synthetic data using the `Faker` library |
 
-#### **Consumers (src/consumers/ - Windows)**
-
-| File | Description |
-|------|-------------|
-| `base_consumer.py` | Abstract class with common methods (Kafka connection, message consumption, processing) |
-| `consumer_1_logs.py` | Subscribes to topic `pi-hole.logs.file` and processes DNS logs (local file) |
-| `consumer_2_api_logs.py` | Subscribes to topic `pi-hole.logs.api` and processes API logs (dnsmasq, ftl, webserver) |
-| `consumer_3_api_ideas.py` | Subscribes to topic `pi-hole.data.endpoints` and processes metrics (devices, top clients, upstreams, FTL, system, queries) |
-| `consumer_4_public_apis.py` | Subscribes to topic `public.api.data` and processes external data |
-| `consumer_5_faker.py` | Subscribes to topics `fake-data.*` and processes synthetic data |
-
-#### **Services (src/services/ - Windows)**
+### **Consumers (src/consumers/)**
 
 | File | Description |
-|------|-------------|
-| `api_client.py` | Reusable HTTP client for calling external APIs (error handling, retry, timeouts) |
-| `kafka_client.py` | Encapsulates Kafka connection (production and consumption) |
+|---------|-----------|
+| `consumer_1_logs.py` | Subscribes to `pi_hole_logs_file` (local logs) |
+| `consumer_2_api_logs.py` | Subscribes to `pi_hole_logs_api` (API logs) |
+| `consumer_3_api_ideas.py` | Subscribes to `pi_hole_data_endpoints` (metrics) |
+| `consumer_4_public_apis.py` | Subscribes to `public_api_data` (public APIs) |
+| `consumer_5_faker.py` | Subscribes to `fake-data.*` topics (Faker data) |
 
-#### **Models (src/models/ - Windows)**
 
-| File | Description |
-|------|-------------|
-| `pi_hole_log.py` | Schema for Pi-hole logs (timestamp, client, domain, status) |
-| `pi_hole_metric.py` | Schema for metrics (devices, top clients, upstreams, etc.) |
-| `public_api_data.py` | Schema for public API data (geolocation, etc.) |
-| `fake_data.py` | Schema for synthetic data (id, value, category, timestamp) |
+---
 
-#### **Configuration (src/config/ - Windows)**
+## 🚧 **Control Interface (In Development)**
 
-| File | Description |
-|------|-------------|
-| `settings.py` | Loads `.env` variables using `python-dotenv` |
-| `topics.py` | Defines constants with topic names |
+I am building a **graphical interface** (using PyQt6) to manage producers and consumers directly. The interface will allow:
 
-#### **Utilities (src/utils/ - Windows)**
+- **Start** each producer and consumer individually
+- **Stop** and **restart** services
+- **View the status** of each component in real-time
+- **Control** the data pipeline without using the terminal
 
-| File | Description |
-|------|-------------|
-| `logger.py` | Configures logging with levels, colors, and format |
-| `file_watcher.py` | Monitors files in real-time (tail -f) |
-| `timestamp.py` | Functions for timestamp manipulation (formatting, conversion) |
-
-#### **Scripts (scripts/ - Windows)**
-
-| File | Description |
-|------|-------------|
-| `create_topics.sh` | Creates Kafka topics: `pi-hole.logs.file`, `pi-hole.logs.api`, `pi-hole.data.endpoints`, `public.api.data`, `fake-data.*` |
-| `delete_topics.sh` | Removes topics (useful for cleanup) |
-| `start_producers.sh` | Starts all producers in the background |
+The interface is under active development and will soon be fully integrated into the project.
 
 ---
 
@@ -255,7 +218,7 @@ git clone https://github.com/SEU_USUARIO/kafka-n-apis.git
 cd kafka-n-apis
 ```
 
-### 2. Start Kafka and Zookeeper
+### 2. Start Kafka
 
 ```bash
 docker-compose up -d
@@ -385,7 +348,7 @@ docker exec -it kafka kafka-consumer-groups.sh --bootstrap-server localhost:9092
 ### Top 3 from Pi-hole topic
 
 ```bash
-docker exec -it kafka kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic pi-hole.logs.file --from-beginning --max-messages 3
+docker exec -it kafka kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic pi_hole_logs_file --from-beginning --max-messages 3
 ```
 
 ### Running consumers (if not already running)
@@ -425,7 +388,6 @@ python -m src.consumers.consumer_5_faker
 | `PIHOLE_URL`          | Pi-hole admin API URL           | —                 |
 | `PIHOLE_API_TOKEN`    | Pi-hole API token               | —                 |
 | `PIHOLE_LOG_PATH`     | Path to local pihole.log        | `/var/log/pihole/pihole.log` |
-| `RANDOM_API_URL`      | Localhost random API URL        | `http://localhost:5000/random` |
 | `KAFKA_BOOTSTRAP_RPI` | Kafka bootstrap for Raspberry Pi | `YOUR_WINDOWS_IP:9092` |
 
 ---
